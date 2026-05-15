@@ -1,0 +1,296 @@
+{
+  "info": {
+    "type": 99,
+    "name": "飛翔鳥中文",
+    "alias": "飛翔鳥",
+    "index": 1009,
+    "version": 1,
+    "enabled": true,
+    "sortIndex": 1009,
+    "allowSearch": true,
+    "allowDownload": true
+  },
+  "data": {
+    "searchIndex": 1009,
+    "request": {
+      "home": {
+        "main": {
+          "settings": {
+            "apiHost": "https://tw.fxnzw.com",
+            "apiPath": "/",
+            "needsCustomUserAgent": true,
+            "httpMethod": "GET"
+          },
+          "config": {
+            "charEncodingRawValue": 2
+          }
+        },
+        "inPage": true
+      },
+      "detail": {
+        "main": {
+          "settings": {
+            "apiHost": "https://tw.fxnzw.com",
+            "needsCustomUserAgent": true,
+            "httpMethod": "GET"
+          },
+          "config": {
+            "charEncodingRawValue": 2
+          }
+        },
+        "inPage": false
+      },
+      "chapter": {
+        "main": {
+          "settings": {
+            "apiHost": "https://tw.fxnzw.com",
+            "needsCustomUserAgent": true,
+            "httpMethod": "GET"
+          },
+          "config": {
+            "charEncodingRawValue": 2
+          }
+        },
+        "isPartial": false
+      },
+      "content": {
+        "settings": {
+          "apiHost": "https://tw.fxnzw.com",
+          "needsCustomUserAgent": true,
+          "httpMethod": "GET"
+        },
+        "config": {
+          "charEncodingRawValue": 2
+        }
+      },
+      "category": {
+        "main": {
+          "settings": {
+            "apiHost": "https://tw.fxnzw.com",
+            "apiPathReplacements": {
+              ".html": ""
+            },
+            "apiPathSuffix": ".html",
+            "apiPageIndexPrefix": "_",
+            "needsCustomUserAgent": true,
+            "httpMethod": "GET"
+          },
+          "config": {
+            "charEncodingRawValue": 2
+          }
+        }
+      },
+      "search": {
+        "settings": {
+          "apiHost": "https://tw.fxnzw.com",
+          "apiPath": "/fxnlist",
+          "extraApiPathSuffix": ".html",
+          "apiQueryTypeRawValue": 2,
+          "needsCustomUserAgent": true,
+          "httpMethod": "GET"
+        },
+        "config": {
+          "charEncodingRawValue": 2
+        }
+      }
+    },
+    "response": {
+      "config": {
+        "charEncodingRawValue": 2
+      },
+      "hostsToReplace": [
+        "https://tw.fxnzw.com",
+        "http://tw.fxnzw.com",
+        "https://www.fxnzw.com",
+        "http://www.fxnzw.com",
+        "//tw.fxnzw.com",
+        "//www.fxnzw.com"
+      ],
+      "imageHost": "https://www.fxnzw.com",
+      "home": {
+        "template": 0,
+        "main": {
+          "pathRegex": "^/fxnbook/\\d+\\.html$",
+          "listElement": {
+            "cssSelector": "div[style=\"margin: 15px 10px; overflow: hidden; float: left;\"]"
+          },
+          "pathElement": {
+            "actionValue": 10,
+            "cssSelector": "div.newbooklist_2 > a",
+            "attributeKey": "href"
+          },
+          "nameElement": {
+            "actionValue": 0,
+            "cssSelector": "div.newbooklist_2 > a"
+          },
+          "imageElement": {
+            "actionValue": 10,
+            "cssSelector": "div.newbooklist_1 img",
+            "attributeKey": "src"
+          },
+          "summaryElement": {
+            "actionValue": 0,
+            "cssSelector": "div.newbooklist_3 > a"
+          }
+        },
+        "category": {
+          "pathRegex": "^/fxnlist/[^/]+\\.html$",
+          "listElement": {
+            "cssSelector": "div.onlypc[style*=\"background-color: #4e72b8\"] > span.hover0"
+          },
+          "pathElement": {
+            "actionValue": 10,
+            "cssSelector": "a",
+            "attributeKey": "href"
+          },
+          "nameElement": {
+            "actionValue": 0,
+            "cssSelector": "a"
+          }
+        }
+      },
+      "detail": {
+        "chapterPathRegex": "^/fxnchapter/\\d+\\.html$",
+        "imageElement": {
+          "actionValue": 10,
+          "cssSelector": "meta[property=og:image]",
+          "attributeKey": "content"
+        },
+        "authorElement": {
+          "actionValue": 10,
+          "cssSelector": "meta[property=og:novel:author]",
+          "attributeKey": "content"
+        },
+        "categoryElement": {
+          "actionValue": 10,
+          "cssSelector": "meta[property=og:novel:category]",
+          "attributeKey": "content"
+        },
+        "summaryElement": {
+          "separator": "\n",
+          "actionValue": 19,
+          "cssSelector": "div[style*=\"min-height: 100px\"]"
+        },
+        "updatedTimeElement": {
+          "actionValue": 10,
+          "cssSelector": "meta[property=og:novel:update_time]",
+          "attributeKey": "content"
+        },
+        "chapterNameElement": {
+          "actionValue": 10,
+          "cssSelector": "meta[property=og:novel:latest_chapter_name]",
+          "attributeKey": "content"
+        },
+        "chapterPathElement": {
+          "actionValue": 10,
+          "cssSelector": "a[href^=\"/fxnchapter/\"]",
+          "attributeKey": "href"
+        }
+      },
+      "chapter": {
+        "pathRegex": "^/fxnread/\\d+_\\d+\\.html$",
+        "listElement": {
+          "cssSelector": "span[style*=\"width:31%\"]"
+        },
+        "pathElement": {
+          "actionValue": 10,
+          "cssSelector": "a",
+          "attributeKey": "href"
+        },
+        "nameElement": {
+          "actionValue": 0,
+          "cssSelector": "a"
+        }
+      },
+      "content": {
+        "chapterPathRegex": "^/fxnread/\\d+_\\d{2,}\\.html$",
+        "nameElement": {
+          "actionValue": 0,
+          "cssSelector": "h1#ChapterTitle"
+        },
+        "contentElement": {
+          "actionValue": 2,
+          "cssSelector": "div#Lab_Contents > p[id]",
+          "collectionSeparator": "\n",
+          "collectionActionValue": 0
+        },
+        "lastChapterPathElement": {
+          "actionValue": 10,
+          "cssSelector": "div.erzitop_ > a[href*=\"/fxnread/\"]",
+          "attributeKey": "href"
+        },
+        "nextChapterPathElement": {
+          "actionValue": 6,
+          "cssSelector": "div.erzitop_ > a[href*=\"/fxnread/\"]",
+          "attributeKey": "href"
+        }
+      },
+      "category": {
+        "pageSize": 20,
+        "pathRegex": "^/fxnbook/\\d+\\.html$",
+        "listElement": {
+          "cssSelector": "div#ListContents > div[style*=\"border-bottom: 1px dotted #d6d6d6\"]"
+        },
+        "pathElement": {
+          "actionValue": 10,
+          "cssSelector": "div.margin0h5 > a.fonttext",
+          "attributeKey": "href"
+        },
+        "nameElement": {
+          "actionValue": 0,
+          "cssSelector": "div.margin0h5 > a.fonttext"
+        },
+        "imageElement": {
+          "actionValue": 10,
+          "cssSelector": "div.imgwidth img",
+          "attributeKey": "src"
+        },
+        "authorElement": {
+          "actionValue": 0,
+          "cssSelector": "div.margin0h5 > a:nth-of-type(2)"
+        },
+        "categoryElement": {
+          "actionValue": 0,
+          "cssSelector": "div.biaoqian > a"
+        },
+        "summaryElement": {
+          "actionValue": 0,
+          "cssSelector": "div.neirongh5 > a"
+        },
+        "chapterNameElement": {
+          "actionValue": 0,
+          "cssSelector": "a[href^=\"/fxnbook/\"][style*=\"color: #999\"]",
+          "blankReplacements": {
+            "0": [
+              "最新章節"
+            ]
+          }
+        },
+        "updatedTimeElement": {
+          "actionValue": 0,
+          "cssSelector": "span.lefth5"
+        }
+      },
+      "search": {
+        "pathRegex": "^/fxnbook/\\d+\\.html$",
+        "listElement": {
+          "cssSelector": "div#ListContents > div[style*=\"border-bottom: 1px dotted #d6d6d6\"]"
+        },
+        "mPathElement": {
+          "actionValue": 10,
+          "cssSelector": "div.margin0h5 > a.fonttext",
+          "attributeKey": "href"
+        },
+        "mNameElement": {
+          "actionValue": 0,
+          "cssSelector": "div.margin0h5 > a.fonttext"
+        },
+        "mImageElement": {
+          "actionValue": 10,
+          "cssSelector": "div.imgwidth img",
+          "attributeKey": "src"
+        }
+      }
+    }
+  }
+}

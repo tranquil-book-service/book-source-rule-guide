@@ -1,0 +1,276 @@
+{
+  "info": {
+    "type": 99,
+    "name": "全本小說",
+    "alias": "全本小說",
+    "index": 1004,
+    "version": 1,
+    "enabled": true,
+    "sortIndex": 1004,
+    "allowSearch": true,
+    "allowDownload": true
+  },
+  "data": {
+    "searchIndex": 1004,
+    "request": {
+      "home": {
+        "main": {
+          "settings": {
+            "apiHost": "https://big5.quanben5.com",
+            "apiPath": "/",
+            "needsCustomUserAgent": true,
+            "httpMethod": "GET"
+          },
+          "config": {
+            "charEncodingRawValue": 2
+          }
+        },
+        "inPage": true
+      },
+      "detail": {
+        "main": {
+          "settings": {
+            "apiHost": "https://big5.quanben5.com",
+            "apiPathSuffix": "xiaoshuo.html",
+            "needsCustomUserAgent": true,
+            "httpMethod": "GET"
+          },
+          "config": {
+            "charEncodingRawValue": 2
+          }
+        },
+        "inPage": true
+      },
+      "content": {
+        "settings": {
+          "apiHost": "https://big5.quanben5.com",
+          "needsCustomUserAgent": true,
+          "httpMethod": "GET"
+        },
+        "config": {
+          "charEncodingRawValue": 2
+        }
+      },
+      "search": {
+        "settings": {
+          "apiHost": "https://big5.quanben5.com",
+          "apiPath": "/",
+          "apiQueryKey": "keywords",
+          "apiQueryTypeRawValue": 1,
+          "apiQueryParams": {
+            "c": "book",
+            "a": "search.json"
+          },
+          "jsScripts": [
+            {
+              "key": "b",
+              "source": "function qb5encode(keywords){var staticchars='PXhw7UT1B0a9kQDKZsjIASmOezxYG4CHo5Jyfg2b8FLpEvRr3WtVnlqMidu6cN';var encodechars='';var s=encodeURI(keywords);for(var i=0;i<s.length;i++){var num0=staticchars.indexOf(s[i]);if(num0==-1){var code=s[i]}else{var code=staticchars[(num0+3)%62]}var num1=parseInt(Math.random()*62,10);var num2=parseInt(Math.random()*62,10);encodechars+=staticchars[num1]+code+staticchars[num2]}return encodeURI(encodechars)}",
+              "invoke": "qb5encode"
+            }
+          ],
+          "httpHeaders": {
+            "Referer": "https://big5.quanben5.com/"
+          },
+          "needsCustomUserAgent": true,
+          "httpMethod": "GET"
+        },
+        "config": {
+          "charEncodingRawValue": 2
+        }
+      },
+      "category": {
+        "main": {
+          "settings": {
+            "apiHost": "https://big5.quanben5.com",
+            "apiPathReplacements": {
+              ".html": ""
+            },
+            "apiPathSuffix": ".html",
+            "apiPageIndexPrefix": "_",
+            "needsCustomUserAgent": true,
+            "httpMethod": "GET"
+          },
+          "config": {
+            "charEncodingRawValue": 2
+          }
+        }
+      }
+    },
+    "response": {
+      "config": {
+        "charEncodingRawValue": 2
+      },
+      "hostsToReplace": [
+        "https://big5.quanben5.com",
+        "//big5.quanben5.com",
+        "https://img.c0m.io",
+        "//img.c0m.io"
+      ],
+      "imageHost": "https://img.c0m.io",
+      "home": {
+        "template": 0,
+        "main": {
+          "pathRegex": "^\/n\/.*\/",
+          "listElement": {
+            "cssSelector": "div.pic_txt_list"
+          },
+          "pathElement": {
+            "actionValue": 10,
+            "cssSelector": "h3 a",
+            "attributeKey": "href"
+          },
+          "nameElement": {
+            "actionValue": 0,
+            "cssSelector": "h3 a span"
+          },
+          "imageElement": {
+            "actionValue": 10,
+            "cssSelector": "div.pic img",
+            "attributeKey": "src"
+          }
+        },
+        "category": {
+          "pathRegex": "^\/category\/.*.html",
+          "listElement": {
+            "cssSelector": "div.nav ul li"
+          },
+          "pathElement": {
+            "actionValue": 10,
+            "cssSelector": "a",
+            "attributeKey": "href"
+          },
+          "nameElement": {
+            "actionValue": 0,
+            "cssSelector": "a span"
+          }
+        }
+      },
+      "detail": {
+        "imageElement": {
+          "actionValue": 10,
+          "cssSelector": "div.pic_txt_list div.pic img",
+          "attributeKey": "src"
+        },
+        "authorElement": {
+          "actionValue": 0,
+          "cssSelector": "span.author"
+        },
+        "summaryElement": {
+          "actionValue": 0,
+          "cssSelector": "p.description"
+        },
+        "categoryElement": {
+          "actionValue": 0,
+          "cssSelector": ".breadcrumb a[href^='/category/']"
+        }
+      },
+      "chapter": {
+        "pathRegex": "^\/n\/[^\/]+\/\\d+\\.html",
+        "listElement": {
+          "cssSelector": "ul.list li.c3"
+        },
+        "pathElement": {
+          "actionValue": 10,
+          "cssSelector": "a",
+          "attributeKey": "href"
+        },
+        "nameElement": {
+          "actionValue": 0,
+          "cssSelector": "a span"
+        }
+      },
+      "content": {
+        "chapterPathRegex": "^\/n\/[^\/]+\/\\d+\\.html",
+        "nameElement": {
+          "actionValue": 0,
+          "cssSelector": "h1.title1"
+        },
+        "contentElement": {
+          "actionValue": 2,
+          "cssSelector": "div#content p",
+          "collectionSeparator": "\n"
+        },
+        "lastChapterPathElement": {
+          "actionValue": 10,
+          "cssSelector": "p#page_last a",
+          "attributeKey": "href"
+        },
+        "nextChapterPathElement": {
+          "actionValue": 10,
+          "cssSelector": "p#page_next a",
+          "attributeKey": "href"
+        }
+      },
+      "category": {
+        "pageSize": 20,
+        "pathRegex": "^\\/n\\/.*\\/",
+        "removeElements": [
+          "span.read_ico"
+        ],
+        "listElement": {
+          "cssSelector": "div.pic_txt_list"
+        },
+        "pathElement": {
+          "actionValue": 10,
+          "cssSelector": "h3 a",
+          "attributeKey": "href"
+        },
+        "nameElement": {
+          "actionValue": 0,
+          "cssSelector": "h3 a span"
+        },
+        "imageElement": {
+          "actionValue": 10,
+          "cssSelector": "div.pic img",
+          "attributeKey": "src"
+        },
+        "authorElement": {
+          "actionValue": 0,
+          "cssSelector": "p.info span.author"
+        },
+        "summaryElement": {
+          "actionValue": 0,
+          "cssSelector": "p.description",
+          "blankReplacements": {
+            "1": ["&lt;br\\s*\\/?&gt;"]
+          }
+        }
+      },
+      "search": {
+        "pathRegex": "^\\/n\\/.*\\/",
+        "listElement": {
+          "cssSelector": "div.pic_txt_list",
+          "shouldUnescapeUnicode": true,
+          "shouldNormalise": true,
+          "rawContentReplacements": {
+            "\"": [
+              "\\\""
+            ],
+            "/": [
+              "\\/"
+            ],
+            "": [
+              "search({\"id\":0,\"content\":\"",
+              "\"});",
+              "\\r\\n\\t"
+            ]
+          }
+        },
+        "mPathElement": {
+          "actionValue": 10,
+          "cssSelector": "h3 a",
+          "attributeKey": "href"
+        },
+        "mNameElement": {
+          "actionValue": 0,
+          "cssSelector": "h3 a span"
+        },
+        "mImageElement": {
+          "actionValue": 10,
+          "cssSelector": "div.pic img",
+          "attributeKey": "src"
+        }
+      }
+    }
+  }
+}

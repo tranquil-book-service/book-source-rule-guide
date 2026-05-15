@@ -1,0 +1,4282 @@
+<!doctype html>
+<html lang="zh-Hant" data-theme="light">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>書源規則對接指南</title>
+  <meta name="description" content="書源 JSON 規則對接指南：info / request / response 三層結構、功能區塊、actionValue 解析類型、常見配置與疑難排解。">
+  <style>
+    :root {
+      color-scheme: light;
+      --topbar-height: 53px;
+      --bg: #f6f7f5;
+      --bg-soft: #eef2ef;
+      --panel: #ffffff;
+      --panel-soft: #f0f4f2;
+      --ink: #1f2a28;
+      --ink-soft: #33423f;
+      --muted: #64736f;
+      --line: #d9e1dd;
+      --line-strong: #c1ccc7;
+      --teal: #087f73;
+      --teal-ink: #06695f;
+      --teal-soft: #dff3ef;
+      --amber: #b7791f;
+      --amber-ink: #7c4e12;
+      --amber-soft: #fff3d6;
+      --rose: #b94c5d;
+      --rose-ink: #873143;
+      --rose-soft: #fde8ec;
+      --blue: #3067a3;
+      --blue-ink: #245380;
+      --blue-soft: #e3eef8;
+      --violet: #6f4dab;
+      --violet-ink: #543389;
+      --violet-soft: #ece4f7;
+      --green: #1f8050;
+      --green-ink: #14633b;
+      --green-soft: #d8f0e2;
+      --code-bg: #16211f;
+      --code-ink: #e7f1ed;
+      --code-comment: #7d9893;
+      --code-key: #f3d69b;
+      --code-str: #bed4ef;
+      --code-num: #f7a07c;
+      --shadow: 0 14px 40px rgba(30, 45, 40, .08);
+      --shadow-sm: 0 4px 12px rgba(30, 45, 40, .06);
+      --radius: 10px;
+    }
+
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #0e151c;
+      --bg-soft: #15202a;
+      --panel: #17232e;
+      --panel-soft: #1d2b37;
+      --ink: #e3edf5;
+      --ink-soft: #c6d4e0;
+      --muted: #8da1b3;
+      --line: #243340;
+      --line-strong: #2e4150;
+      --teal: #5cc2ee;
+      --teal-ink: #87d4f3;
+      --teal-soft: #0e2a3b;
+      --amber: #e0b566;
+      --amber-ink: #f3cf8a;
+      --amber-soft: #36281a;
+      --rose: #e08fa1;
+      --rose-ink: #f1abbb;
+      --rose-soft: #36202a;
+      --blue: #8ec2ec;
+      --blue-ink: #b0d4f1;
+      --blue-soft: #102538;
+      --violet: #b39ce0;
+      --violet-ink: #c8b3ed;
+      --violet-soft: #221b36;
+      --green: #7cd0a0;
+      --green-ink: #9adfb6;
+      --green-soft: #133024;
+      --code-bg: #0a141d;
+      --code-ink: #dfeaf3;
+      --code-comment: #6a8294;
+      --code-key: #5cc2ee;
+      --code-str: #b5e0a0;
+      --code-num: #f0a677;
+      --shadow: 0 14px 40px rgba(0, 0, 0, .42);
+      --shadow-sm: 0 4px 12px rgba(0, 0, 0, .3);
+    }
+
+    [data-theme="dark"] body {
+      background:
+        radial-gradient(circle at 0% 0%, rgba(0, 199, 255, .06), transparent 480px),
+        var(--bg);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(8, 127, 115, .08), transparent 480px),
+        var(--bg);
+      color: var(--ink);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    a:hover {
+      color: var(--teal);
+    }
+
+    /* ====== Top bar ====== */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px clamp(14px, 3vw, 28px);
+      border-bottom: 1px solid var(--line);
+      background: color-mix(in srgb, var(--panel) 92%, transparent);
+      backdrop-filter: blur(14px);
+    }
+
+    .topbar .brand-mini {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-weight: 800;
+    }
+
+    .topbar .brand-mark {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 7px;
+      background: var(--teal);
+      color: #fff;
+      font-weight: 800;
+    }
+
+    .topbar .title-stack {
+      display: grid;
+    }
+
+    .topbar .title-stack small {
+      color: var(--muted);
+      font-size: 11.5px;
+      font-weight: 500;
+    }
+
+    .nav-toggle {
+      display: none;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--ink);
+      cursor: pointer;
+    }
+
+    .nav-toggle span,
+    .nav-toggle::before,
+    .nav-toggle::after {
+      content: "";
+      display: block;
+      width: 17px;
+      height: 2px;
+      border-radius: 99px;
+      background: currentColor;
+      transition: transform .18s ease, opacity .18s ease;
+    }
+
+    .nav-toggle {
+      gap: 4px;
+    }
+
+    body.nav-open .nav-toggle span {
+      opacity: 0;
+    }
+
+    body.nav-open .nav-toggle::before {
+      transform: translateY(6px) rotate(45deg);
+    }
+
+    body.nav-open .nav-toggle::after {
+      transform: translateY(-6px) rotate(-45deg);
+    }
+
+    .search-wrap {
+      flex: 1;
+      max-width: 520px;
+      position: relative;
+      margin-left: auto;
+    }
+
+    .search-wrap input {
+      width: 100%;
+      padding: 9px 14px 9px 38px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--panel-soft);
+      color: var(--ink);
+      font: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .15s, background .15s;
+    }
+
+    .search-wrap input:focus {
+      border-color: var(--teal);
+      background: var(--panel);
+    }
+
+    .search-wrap::before {
+      content: "⌕";
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 16px;
+      pointer-events: none;
+    }
+
+    .search-wrap kbd {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      padding: 2px 6px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: var(--bg-soft);
+      color: var(--muted);
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+    }
+
+    .icon-btn {
+      display: inline-grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--ink);
+      cursor: pointer;
+      font-size: 16px;
+      transition: background .15s, border-color .15s, transform .15s;
+    }
+
+    .icon-btn:hover {
+      background: var(--panel-soft);
+      border-color: var(--line-strong);
+    }
+
+    .icon-btn:active {
+      transform: scale(.94);
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 36px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--panel);
+      color: var(--ink);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 650;
+      cursor: pointer;
+      transition: background .15s, border-color .15s;
+    }
+
+    .theme-toggle:hover {
+      background: var(--panel-soft);
+      border-color: var(--teal);
+      color: var(--teal-ink);
+    }
+
+    .theme-toggle .ico {
+      font-size: 15px;
+      line-height: 1;
+    }
+
+    .theme-toggle .label {
+      font-size: 12.5px;
+    }
+
+    @media (max-width: 640px) {
+      .theme-toggle .label {
+        display: none;
+      }
+
+      .theme-toggle {
+        padding: 0;
+        width: 36px;
+        justify-content: center;
+      }
+    }
+
+    .progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 2px;
+      width: 0%;
+      background: linear-gradient(90deg, var(--teal), var(--blue));
+      z-index: 60;
+      transition: width .1s linear;
+    }
+
+    /* ====== Layout ====== */
+    .layout {
+      display: grid;
+      grid-template-columns: 264px minmax(0, 1fr);
+      min-height: calc(100vh - 53px);
+    }
+
+    aside {
+      position: sticky;
+      top: 53px;
+      align-self: start;
+      height: calc(100vh - 53px);
+      padding: 22px 18px;
+      border-right: 1px solid var(--line);
+      background: color-mix(in srgb, var(--panel) 80%, transparent);
+      overflow: auto;
+    }
+
+    .nav-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 44;
+      display: none;
+      background: rgba(15, 22, 20, .46);
+      backdrop-filter: blur(2px);
+    }
+
+    nav {
+      display: grid;
+      gap: 2px;
+    }
+
+    nav a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 34px;
+      padding: 6px 11px;
+      border-radius: 7px;
+      color: var(--muted);
+      font-size: 13.5px;
+      font-weight: 550;
+      transition: background .12s, color .12s;
+    }
+
+    nav a::before {
+      content: "";
+      width: 4px;
+      height: 4px;
+      border-radius: 99px;
+      background: currentColor;
+      opacity: .5;
+      flex: 0 0 auto;
+    }
+
+    nav a:hover {
+      background: var(--panel-soft);
+      color: var(--ink);
+    }
+
+    nav a.active {
+      background: var(--teal-soft);
+      color: var(--teal-ink);
+    }
+
+    nav a.active::before {
+      width: 6px;
+      height: 6px;
+      opacity: 1;
+    }
+
+    nav .nav-section {
+      margin: 14px 0 4px;
+      padding: 0 11px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    main {
+      min-width: 0;
+      padding: 32px clamp(18px, 4vw, 56px) 80px;
+    }
+
+    /* ====== Hero ====== */
+    .hero {
+      display: grid;
+      gap: 18px;
+      padding: 18px 0 12px;
+      max-width: 1200px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--panel) 70%, transparent);
+      color: var(--muted);
+      font-size: 12.5px;
+      font-weight: 650;
+    }
+
+    .eyebrow .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 99px;
+      background: var(--teal);
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      line-height: 1.2;
+      margin: 0;
+      color: var(--ink);
+    }
+
+    h1 {
+      max-width: 940px;
+      font-size: clamp(32px, 5.4vw, 58px);
+      font-weight: 800;
+      letter-spacing: -.01em;
+    }
+
+    h2 {
+      font-size: clamp(23px, 2.6vw, 32px);
+      margin-bottom: 10px;
+      font-weight: 800;
+      letter-spacing: -.005em;
+    }
+
+    h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    h4 {
+      font-size: 15px;
+      margin-bottom: 6px;
+      font-weight: 700;
+      color: var(--ink-soft);
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .hero p {
+      max-width: 860px;
+      font-size: 16.5px;
+    }
+
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .quick-actions a {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--panel);
+      color: var(--ink);
+      font-size: 13.5px;
+      font-weight: 650;
+      transition: background .12s, transform .12s, border-color .12s;
+    }
+
+    .quick-actions a:hover {
+      background: var(--teal-soft);
+      color: var(--teal-ink);
+      border-color: var(--teal);
+      transform: translateY(-1px);
+    }
+
+    .quick-actions a.primary {
+      background: var(--teal);
+      border-color: var(--teal);
+      color: #fff;
+    }
+
+    .quick-actions a.primary:hover {
+      background: var(--teal-ink);
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      max-width: 1000px;
+      margin-top: 4px;
+    }
+
+    .stat {
+      display: block;
+      min-height: 82px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: color-mix(in srgb, var(--panel) 90%, transparent);
+      box-shadow: var(--shadow-sm);
+      transition: border-color .15s, transform .15s, background .15s;
+    }
+
+    .stat:hover {
+      border-color: var(--teal);
+      transform: translateY(-1px);
+      background: color-mix(in srgb, var(--teal-soft) 35%, var(--panel));
+      color: var(--ink);
+    }
+
+    .stat b {
+      display: block;
+      margin-bottom: 2px;
+      color: var(--ink);
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 12.5px;
+    }
+
+    /* ====== Sections ====== */
+    section {
+      max-width: 1200px;
+      margin-top: 56px;
+      scroll-margin-top: 70px;
+    }
+
+    .sec-head {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .sec-head .num {
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: var(--teal-soft);
+      color: var(--teal-ink);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .04em;
+    }
+
+    .anchor-link {
+      opacity: 0;
+      margin-left: 6px;
+      color: var(--muted);
+      font-weight: 500;
+      transition: opacity .15s;
+    }
+
+    h2:hover .anchor-link,
+    h3:hover .anchor-link {
+      opacity: 1;
+    }
+
+    .section-lead {
+      max-width: 880px;
+      margin-bottom: 18px;
+      font-size: 15.5px;
+      color: var(--muted);
+    }
+
+    /* ====== Grids & Cards ====== */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .grid.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .grid.four {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .card {
+      padding: 16px 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--shadow-sm);
+      transition: border-color .15s, transform .15s;
+    }
+
+    .card.compact {
+      padding: 13px 14px;
+    }
+
+    .card.bordered {
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .card .card-foot {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--line);
+      color: var(--muted);
+      font-size: 12.5px;
+    }
+
+    .step-grid {
+      padding-top: 0;
+      gap: 14px;
+    }
+
+    .step-card {
+      position: relative;
+      padding-top: 16px;
+      padding-left: 18px;
+    }
+
+    .step-card[data-step]::before {
+      content: attr(data-step);
+      position: static;
+      display: inline-grid;
+      width: 24px;
+      height: 24px;
+      margin: 0 0 8px;
+      place-items: center;
+      border-radius: 6px;
+      background: var(--bg-soft);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .02em;
+      box-shadow: none;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    [data-theme="dark"] .step-card[data-step]::before {
+      color: var(--muted);
+      background: var(--panel-soft);
+      box-shadow: none;
+    }
+
+    .step-card h3,
+    .step-card h4 {
+      margin-bottom: 8px;
+      font-size: 16px;
+      color: var(--ink);
+    }
+
+    .step-card h3 {
+      font-size: 16.5px;
+    }
+
+    .patterns-grid {
+      gap: 14px;
+    }
+
+    .band {
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: color-mix(in srgb, var(--panel) 90%, transparent);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* ====== Flow ====== */
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 14px;
+      counter-reset: step;
+    }
+
+    .flow.flow-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .flow-step {
+      position: relative;
+      min-height: 110px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--shadow-sm);
+      counter-increment: step;
+    }
+
+    .flow-step::before {
+      content: counter(step);
+      position: static;
+      display: inline-grid;
+      width: 24px;
+      height: 24px;
+      margin-bottom: 8px;
+      place-items: center;
+      border-radius: 6px;
+      background: var(--bg-soft);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .flow-step b {
+      display: block;
+      margin: 0 0 4px;
+      font-size: 14.5px;
+    }
+
+    .flow-step span {
+      color: var(--muted);
+      font-size: 12.8px;
+    }
+
+    /* ====== Tags ====== */
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: var(--panel-soft);
+      color: var(--ink-soft);
+      font-size: 12px;
+      font-weight: 650;
+      white-space: nowrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .tag.teal {
+      background: var(--teal-soft);
+      color: var(--teal-ink);
+    }
+
+    .tag.amber {
+      background: var(--amber-soft);
+      color: var(--amber-ink);
+    }
+
+    .tag.rose {
+      background: var(--rose-soft);
+      color: var(--rose-ink);
+    }
+
+    .tag.blue {
+      background: var(--blue-soft);
+      color: var(--blue-ink);
+    }
+
+    .tag.violet {
+      background: var(--violet-soft);
+      color: var(--violet);
+    }
+
+    .tag.required {
+      background: var(--rose-soft);
+      color: var(--rose-ink);
+    }
+
+    .tag.optional {
+      background: var(--panel-soft);
+      color: var(--muted);
+    }
+
+    /* ====== Tables ====== */
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--shadow-sm);
+    }
+
+    table {
+      width: 100%;
+      min-width: 720px;
+      border-collapse: collapse;
+      font-size: 13.5px;
+    }
+
+    th,
+    td {
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: var(--bg-soft);
+      color: var(--ink-soft);
+      font-size: 12.5px;
+      font-weight: 800;
+      white-space: nowrap;
+      letter-spacing: .02em;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    tr:hover td {
+      background: color-mix(in srgb, var(--teal-soft) 30%, transparent);
+    }
+
+    td code {
+      font-size: 12.5px;
+    }
+
+    /* 型別欄位（第二欄）— 用 chip 樣式，顏色由 JS 依型別套用 */
+    table td:nth-child(2) {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    table td:nth-child(2) .type-chip {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 5px;
+      border: 1px solid transparent;
+      letter-spacing: .01em;
+    }
+
+    /* ====== Code ====== */
+    code {
+      padding: 1px 6px;
+      border-radius: 5px;
+      background: var(--bg-soft);
+      color: var(--ink-soft);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: .9em;
+      border: 1px solid var(--line);
+    }
+
+    .code-block {
+      position: relative;
+      margin: 12px 0 0;
+    }
+
+    .code-block pre {
+      margin: 0;
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      background: var(--code-bg);
+      color: var(--code-ink);
+      overflow-x: auto;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .05);
+    }
+
+    .code-block pre code {
+      padding: 0;
+      background: transparent;
+      color: inherit;
+      border: 0;
+      font-size: 12.8px;
+      line-height: 1.6;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      padding: 4px 10px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, .06);
+      color: var(--code-ink);
+      font: inherit;
+      font-size: 11.5px;
+      font-weight: 650;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity .15s, background .15s;
+    }
+
+    .code-block:hover .copy-btn {
+      opacity: 1;
+    }
+
+    .copy-btn:hover {
+      background: rgba(255, 255, 255, .14);
+    }
+
+    .copy-btn.copied {
+      background: var(--teal);
+      border-color: var(--teal);
+      color: #fff;
+      opacity: 1;
+    }
+
+    .code-label {
+      position: absolute;
+      top: 8px;
+      left: 12px;
+      padding: 2px 8px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, .06);
+      color: var(--code-comment);
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+      font-weight: 650;
+      letter-spacing: .04em;
+    }
+
+    .code-block.with-label pre {
+      padding-top: 36px;
+    }
+
+    /* JSON syntax highlight */
+    .tok-k {
+      color: var(--code-key);
+      font-weight: 600;
+    }
+
+    .tok-s {
+      color: var(--code-str);
+    }
+
+    .tok-n {
+      color: var(--code-num);
+    }
+
+    .tok-b {
+      color: #c9aaff;
+      font-weight: 600;
+    }
+
+    .tok-c {
+      color: var(--code-comment);
+      font-style: italic;
+    }
+
+    .tok-p {
+      color: #98a8a4;
+    }
+
+    [data-theme="dark"] .tok-b {
+      color: #c2a7ff;
+    }
+
+    [data-theme="dark"] .tok-p {
+      color: #7a8c9a;
+    }
+
+    /* ====== Schema tree ====== */
+    .schema {
+      display: grid;
+      gap: 4px;
+      padding: 16px 18px;
+      border-radius: var(--radius);
+      background: var(--code-bg);
+      color: #dce8e4;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.65;
+      overflow-x: auto;
+    }
+
+    .schema .level-1 {
+      padding-left: 16px;
+      color: #b6d8d1;
+    }
+
+    .schema .level-2 {
+      padding-left: 32px;
+      color: var(--code-key);
+    }
+
+    .schema .level-3 {
+      padding-left: 48px;
+      color: var(--code-str);
+    }
+
+    .schema .cmt {
+      color: var(--code-comment);
+    }
+
+    /* ====== Module tabs ====== */
+    .modules {
+      display: grid;
+      gap: 10px;
+    }
+
+    .module-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel-soft);
+    }
+
+    .module-nav button {
+      flex: 1;
+      min-width: 100px;
+      padding: 8px 12px;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--ink-soft);
+      font: inherit;
+      font-size: 13.5px;
+      font-weight: 650;
+      cursor: pointer;
+      transition: background .12s, color .12s;
+    }
+
+    .module-nav button:hover {
+      background: color-mix(in srgb, var(--panel) 60%, transparent);
+    }
+
+    .module-nav button.active {
+      background: var(--panel);
+      color: var(--teal-ink);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Stack panels in same grid cell so container keeps tallest panel's height,
+       eliminating layout jump on tab switch. */
+    .module-stack {
+      display: grid;
+      grid-template-areas: "stack";
+    }
+
+    .module-panel {
+      grid-area: stack;
+      display: grid;
+      gap: 14px;
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease;
+    }
+
+    .module-panel.active {
+      visibility: visible;
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .pair-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 880px) {
+      .pair-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ====== Spec groups ====== */
+    .spec-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 12px;
+    }
+
+    .spec-group {
+      display: grid;
+      gap: 8px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--shadow-sm);
+      align-content: start;
+    }
+
+    .spec-group>header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 2px;
+    }
+
+    .spec-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: var(--bg-soft);
+      color: var(--ink-soft);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .02em;
+    }
+
+    .spec-badge.required {
+      background: var(--rose-soft);
+      color: var(--rose-ink);
+    }
+
+    .spec-badge.teal {
+      background: var(--teal-soft);
+      color: var(--teal-ink);
+    }
+
+    .spec-badge.amber {
+      background: var(--amber-soft);
+      color: var(--amber-ink);
+    }
+
+    .spec-badge.blue {
+      background: var(--blue-soft);
+      color: var(--blue-ink);
+    }
+
+    .spec-hint {
+      color: var(--muted);
+      font-size: 11.5px;
+      font-weight: 600;
+    }
+
+    .spec-list {
+      list-style: none;
+      margin: 4px 0 0;
+      padding: 0;
+      display: grid;
+      gap: 6px;
+    }
+
+    .spec-list li {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      grid-template-areas: "name type" "desc desc";
+      gap: 2px 8px;
+      padding: 8px 10px;
+      border-radius: 7px;
+      background: var(--bg-soft);
+      transition: background .12s;
+    }
+
+    .spec-list li:hover {
+      background: color-mix(in srgb, var(--teal-soft) 55%, var(--bg-soft));
+    }
+
+    .spec-list li>code:first-child {
+      grid-area: name;
+      padding: 0;
+      background: transparent;
+      border: 0;
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .spec-list .t {
+      grid-area: type;
+      align-self: center;
+      padding: 2px 9px;
+      border-radius: 5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 11.5px;
+      font-weight: 800;
+      letter-spacing: .01em;
+      white-space: nowrap;
+      border: 1px solid transparent;
+    }
+
+    /* 不同型別不同顏色 */
+    .t-str {
+      background: var(--green-soft);
+      color: var(--green-ink);
+      border-color: color-mix(in srgb, var(--green) 40%, transparent);
+    }
+
+    .t-num {
+      background: var(--blue-soft);
+      color: var(--blue-ink);
+      border-color: color-mix(in srgb, var(--blue) 40%, transparent);
+    }
+
+    .t-bool {
+      background: var(--violet-soft);
+      color: var(--violet-ink);
+      border-color: color-mix(in srgb, var(--violet) 40%, transparent);
+    }
+
+    .t-map {
+      background: var(--amber-soft);
+      color: var(--amber-ink);
+      border-color: color-mix(in srgb, var(--amber) 40%, transparent);
+    }
+
+    .t-arr {
+      background: var(--rose-soft);
+      color: var(--rose-ink);
+      border-color: color-mix(in srgb, var(--rose) 40%, transparent);
+    }
+
+    .t-obj {
+      background: var(--teal-soft);
+      color: var(--teal-ink);
+      border-color: color-mix(in srgb, var(--teal) 40%, transparent);
+    }
+
+    [data-theme="dark"] .t-str {
+      border-color: color-mix(in srgb, var(--green) 50%, transparent);
+    }
+
+    [data-theme="dark"] .t-num {
+      border-color: color-mix(in srgb, var(--blue) 50%, transparent);
+    }
+
+    [data-theme="dark"] .t-bool {
+      border-color: color-mix(in srgb, var(--violet) 50%, transparent);
+    }
+
+    [data-theme="dark"] .t-map {
+      border-color: color-mix(in srgb, var(--amber) 50%, transparent);
+    }
+
+    [data-theme="dark"] .t-arr {
+      border-color: color-mix(in srgb, var(--rose) 50%, transparent);
+    }
+
+    [data-theme="dark"] .t-obj {
+      border-color: color-mix(in srgb, var(--teal) 50%, transparent);
+    }
+
+    .spec-list .d {
+      grid-area: desc;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.55;
+    }
+
+    .spec-list .d code {
+      font-size: 11.5px;
+      padding: 0 4px;
+    }
+
+    /* ====== Downloads ====== */
+    .download-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .download-toolbar input {
+      flex: 1;
+      max-width: 360px;
+      padding: 9px 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--panel);
+      color: var(--ink);
+      font: inherit;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .download-toolbar input:focus {
+      border-color: var(--teal);
+    }
+
+    .download-count {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .download-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 10px;
+    }
+
+    .dl-card {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--shadow-sm);
+      color: var(--ink);
+      cursor: pointer;
+      text-align: left;
+      font: inherit;
+      transition: border-color .15s, transform .15s, background .15s;
+    }
+
+    .dl-card:hover {
+      border-color: var(--teal);
+      transform: translateY(-1px);
+      background: color-mix(in srgb, var(--teal-soft) 35%, var(--panel));
+      color: var(--ink);
+    }
+
+    .dl-card:hover .dl-action {
+      background: var(--teal);
+      color: #fff;
+      border-color: var(--teal);
+    }
+
+    [data-theme="dark"] .dl-card:hover .dl-action {
+      color: #07212f;
+    }
+
+    .dl-icon {
+      width: 40px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: var(--teal-soft);
+      color: var(--teal-ink);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .dl-meta {
+      display: grid;
+      line-height: 1.25;
+      min-width: 0;
+    }
+
+    .dl-meta b {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .dl-meta span {
+      font-size: 11.5px;
+      color: var(--muted);
+      font-family: ui-monospace, monospace;
+    }
+
+    .dl-action {
+      padding: 4px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--bg-soft);
+      color: var(--ink-soft);
+      font-size: 12px;
+      font-weight: 650;
+      white-space: nowrap;
+      transition: background .15s, color .15s, border-color .15s;
+    }
+
+    /* ====== Preview Modal ====== */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      align-items: stretch;
+      justify-content: center;
+      padding: clamp(12px, 4vh, 48px);
+      background: rgba(15, 22, 20, .55);
+      backdrop-filter: blur(6px);
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: 900px;
+      max-height: 100%;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, .35);
+      overflow: hidden;
+      animation: modal-in .18s ease-out;
+    }
+
+    @keyframes modal-in {
+      from {
+        transform: translateY(8px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel-soft);
+    }
+
+    .modal-head .icon {
+      width: 42px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border-radius: 7px;
+      background: var(--teal-soft);
+      color: var(--teal-ink);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .modal-head .title-stack {
+      flex: 1;
+      display: grid;
+      line-height: 1.3;
+      min-width: 0;
+    }
+
+    .modal-head .title-stack b {
+      font-size: 15px;
+      color: var(--ink);
+    }
+
+    .modal-head .title-stack span {
+      color: var(--muted);
+      font-size: 12px;
+      font-family: ui-monospace, monospace;
+    }
+
+    .modal-head .actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .modal-head .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--panel);
+      color: var(--ink);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 650;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background .15s, border-color .15s, color .15s;
+    }
+
+    .modal-head .btn:hover {
+      background: var(--panel-soft);
+      border-color: var(--teal);
+      color: var(--teal-ink);
+    }
+
+    .modal-head .btn.primary {
+      background: var(--teal);
+      color: #fff;
+      border-color: var(--teal);
+    }
+
+    .modal-head .btn.primary:hover {
+      background: var(--teal-ink);
+    }
+
+    [data-theme="dark"] .modal-head .btn.primary {
+      color: #07212f;
+    }
+
+    [data-theme="dark"] .modal-head .btn.primary:hover {
+      color: #07212f;
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--panel);
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .modal-close:hover {
+      color: var(--ink);
+      border-color: var(--line-strong);
+    }
+
+    .modal-body {
+      flex: 1;
+      overflow: auto;
+      background: var(--code-bg);
+    }
+
+    .modal-body pre {
+      margin: 0;
+      padding: 18px 22px;
+      color: var(--code-ink);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.65;
+      white-space: pre;
+    }
+
+    .modal-body .loading,
+    .modal-body .err {
+      padding: 30px 22px;
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .modal-body .err strong {
+      color: var(--rose-ink);
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    @media (max-width: 640px) {
+      .modal-backdrop {
+        padding: 0;
+      }
+
+      .modal {
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 0;
+        border: 0;
+      }
+
+      .modal-head {
+        padding: 12px 14px;
+      }
+
+      .modal-head .title-stack b {
+        font-size: 14px;
+      }
+
+      .modal-body pre {
+        padding: 14px 16px;
+        font-size: 12px;
+      }
+    }
+
+    /* ====== Callout ====== */
+    .callout {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 14px;
+      padding: 14px 18px;
+      border-left: 4px solid var(--amber);
+      border-radius: var(--radius);
+      background: var(--amber-soft);
+      color: var(--amber-ink);
+    }
+
+    .callout.tip {
+      border-color: var(--teal);
+      background: var(--teal-soft);
+      color: var(--teal-ink);
+    }
+
+    .callout.warn {
+      border-color: var(--rose);
+      background: var(--rose-soft);
+      color: var(--rose-ink);
+    }
+
+    .callout.info {
+      border-color: var(--blue);
+      background: var(--blue-soft);
+      color: var(--blue-ink);
+    }
+
+    .callout .icon {
+      font-size: 18px;
+      line-height: 1;
+      padding-top: 2px;
+    }
+
+    .callout strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .callout code {
+      background: rgba(0, 0, 0, .08);
+      border-color: transparent;
+    }
+
+    /* ====== Checklist ====== */
+    .checklist {
+      display: grid;
+      gap: 9px;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+
+    .checklist li {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 10px;
+      align-items: start;
+      color: var(--ink-soft);
+      font-size: 14px;
+    }
+
+    .checklist li::before {
+      content: "";
+      display: grid;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: var(--teal-soft);
+      color: var(--teal-ink);
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    /* ====== FAQ ====== */
+    details.faq {
+      padding: 14px 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--shadow-sm);
+      transition: border-color .15s, background .15s;
+    }
+
+    details.faq+details.faq {
+      margin-top: 8px;
+    }
+
+    details.faq[open] {
+      border-color: var(--teal);
+    }
+
+    details.faq summary {
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 14.5px;
+      color: var(--ink);
+      list-style: none;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    details.faq summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details.faq summary::before {
+      content: "?";
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: var(--teal-soft);
+      color: var(--teal-ink);
+      font-weight: 900;
+      font-size: 13px;
+    }
+
+    details.faq[open] summary::before {
+      content: "!";
+      background: var(--amber-soft);
+      color: var(--amber-ink);
+    }
+
+    details.faq .faq-body {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--line);
+      color: var(--muted);
+      font-size: 14px;
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height .24s ease, opacity .18s ease, margin-top .18s ease, padding-top .18s ease;
+    }
+
+    details.faq[open] .faq-body {
+      opacity: 1;
+    }
+
+    details.faq.is-collapsing .faq-body {
+      opacity: 0;
+    }
+
+    .faq-body .code-block {
+      margin-top: 10px;
+    }
+
+    /* ====== Footer ====== */
+    footer {
+      max-width: 1200px;
+      margin-top: 56px;
+      padding-top: 22px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    footer kbd {
+      padding: 1px 6px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: var(--bg-soft);
+      font-family: ui-monospace, monospace;
+      font-size: 11.5px;
+    }
+
+    /* ====== Search filter hiding ====== */
+    .filter-hidden {
+      display: none !important;
+    }
+
+    .search-meta {
+      position: sticky;
+      top: 53px;
+      z-index: 30;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 14px;
+      padding: 8px 14px;
+      border: 1px solid var(--teal);
+      border-radius: var(--radius);
+      background: var(--teal-soft);
+      color: var(--teal-ink);
+      font-size: 13.5px;
+      font-weight: 650;
+    }
+
+    .search-meta.show {
+      display: flex;
+    }
+
+    .search-meta button {
+      margin-left: auto;
+      padding: 4px 10px;
+      border: 0;
+      border-radius: 6px;
+      background: var(--teal);
+      color: #fff;
+      font: inherit;
+      font-size: 12.5px;
+      font-weight: 650;
+      cursor: pointer;
+    }
+
+    /* ====== Responsive ====== */
+    @media (max-width: 1180px) {
+      .grid.four {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .meta-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 980px) {
+      .topbar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        width: 100%;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+        padding-top: var(--topbar-height);
+      }
+
+      .nav-toggle {
+        display: inline-grid;
+      }
+
+      aside {
+        position: fixed;
+        top: var(--topbar-height);
+        left: 0;
+        z-index: 45;
+        width: min(320px, 88vw);
+        height: calc(100vh - var(--topbar-height));
+        max-height: none;
+        padding: 16px 18px;
+        border-right: 1px solid var(--line);
+        border-bottom: 0;
+        transform: translateX(-105%);
+        transition: transform .22s ease;
+        background: var(--panel);
+        box-shadow: var(--shadow);
+      }
+
+      body.nav-open aside {
+        transform: translateX(0);
+      }
+
+      body.nav-open .nav-overlay {
+        display: block;
+      }
+
+      nav {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      nav .nav-section {
+        grid-column: 1 / -1;
+        margin: 6px 0 0;
+      }
+
+      .meta-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .grid,
+      .grid.three,
+      .grid.four {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .flow {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .flow.flow-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      table {
+        min-width: 540px;
+      }
+
+      h1 {
+        font-size: clamp(28px, 5vw, 44px);
+      }
+
+      .pair-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .module-nav button {
+        min-width: 80px;
+        font-size: 13px;
+        padding: 7px 10px;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .topbar {
+        gap: 8px;
+        padding: 8px 14px;
+        flex-wrap: wrap;
+      }
+
+      .topbar .title-stack small {
+        display: none;
+      }
+
+      .topbar .title-stack {
+        font-size: 14px;
+      }
+
+      .search-wrap {
+        order: 3;
+        flex: 1 0 100%;
+        max-width: none;
+        margin-left: 0;
+      }
+
+      .theme-toggle {
+        margin-left: auto;
+      }
+
+      .meta-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 560px) {
+      main {
+        padding: 24px 14px 60px;
+      }
+
+      section {
+        margin-top: 40px;
+      }
+
+      nav {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .meta-grid,
+      .grid,
+      .grid.three,
+      .grid.four,
+      .flow,
+      .flow.flow-4 {
+        grid-template-columns: 1fr;
+      }
+
+      .search-wrap kbd {
+        display: none;
+      }
+
+      .search-wrap input {
+        padding-left: 36px;
+        font-size: 13.5px;
+      }
+
+      .topbar .brand-mini .brand-mark {
+        width: 28px;
+        height: 28px;
+        font-size: 13px;
+      }
+
+      h1 {
+        font-size: 26px;
+        line-height: 1.2;
+      }
+
+      h2 {
+        font-size: 22px;
+      }
+
+      .hero {
+        padding-top: 8px;
+      }
+
+      .hero p {
+        font-size: 15px;
+      }
+
+      .quick-actions a {
+        padding: 7px 12px;
+        font-size: 13px;
+      }
+
+      .module-nav {
+        padding: 4px;
+        gap: 4px;
+      }
+
+      .module-nav button {
+        flex: 1 0 30%;
+        min-width: 0;
+        padding: 7px 6px;
+        font-size: 12.5px;
+      }
+
+      .stat {
+        padding: 12px 14px;
+        min-height: 0;
+      }
+
+      .stat b {
+        font-size: 22px;
+      }
+
+      .code-block pre {
+        font-size: 12px;
+      }
+
+      .code-block pre code {
+        font-size: 12px;
+      }
+
+      .code-block {
+        margin-inline: -2px;
+      }
+
+      th,
+      td {
+        padding: 9px 10px;
+        font-size: 13px;
+      }
+
+      table {
+        min-width: 620px;
+      }
+
+      .table-wrap {
+        margin-inline: -2px;
+      }
+
+      .modal-backdrop {
+        padding: 8px;
+      }
+
+      .modal-head {
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .modal-head .actions {
+        width: 100%;
+      }
+
+      .modal-head .btn {
+        flex: 1;
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 380px) {
+      nav {
+        grid-template-columns: 1fr;
+      }
+
+      .module-nav button {
+        flex: 1 0 45%;
+      }
+    }
+
+    /* ====== Print ====== */
+    @media print {
+
+      .topbar,
+      aside,
+      .progress-bar,
+      .copy-btn,
+      .quick-actions,
+      .search-meta {
+        display: none !important;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      main {
+        padding: 0;
+      }
+
+      .card,
+      .band,
+      .table-wrap,
+      details.faq {
+        break-inside: avoid;
+        box-shadow: none;
+      }
+
+      pre {
+        white-space: pre-wrap;
+      }
+
+      body {
+        background: #fff;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="progress-bar" id="progressBar"></div>
+
+  <header class="topbar">
+    <button class="nav-toggle" id="navToggle" type="button" aria-label="開啟導覽" aria-controls="sideNav"
+      aria-expanded="false">
+      <span></span>
+    </button>
+    <a href="#top" class="brand-mini">
+      <span class="brand-mark">源</span>
+      <span class="title-stack">
+        書源規則對接指南
+      </span>
+    </a>
+    <div class="search-wrap">
+      <input id="searchInput" type="search" placeholder="搜尋欄位、區塊或關鍵字（如 actionValue、apiPath、Cloudflare）"
+        autocomplete="off" spellcheck="false">
+      <kbd>/</kbd>
+    </div>
+    <button class="theme-toggle" id="themeToggle" title="切換深色 / 淺色（按 T）" aria-label="切換深色 / 淺色">
+      <span class="ico" id="themeIcon">☾</span>
+      <span class="label" id="themeLabel">深色</span>
+    </button>
+    <button class="theme-toggle" id="languageToggle" title="切換簡體中文 / 繁體中文" aria-label="切換簡體中文 / 繁體中文">
+      <span class="ico">文</span>
+      <span class="label" id="languageLabel">简体</span>
+    </button>
+  </header>
+
+  <div class="layout" id="top">
+    <div class="nav-overlay" id="navOverlay" hidden></div>
+    <aside>
+      <nav id="sideNav" aria-label="文件導覽">
+        <span class="nav-section">先看這裡</span>
+        <a href="#overview">結構總覽</a>
+        <a href="#quickstart">快速開始</a>
+        <a href="#flow">流程一覽</a>
+
+        <span class="nav-section">欄位手冊</span>
+        <a href="#info">info：書源資訊</a>
+        <a href="#request">request：請求規則</a>
+        <a href="#response">response：解析規則</a>
+        <a href="#parse-element">ParseElement 欄位</a>
+        <a href="#action-value">actionValue 對照</a>
+
+        <span class="nav-section">區塊對照</span>
+        <a href="#modules">功能區塊對照</a>
+
+        <span class="nav-section">參考資料</span>
+        <a href="#patterns">常見場景配置</a>
+        <a href="#downloads">範例書源</a>
+        <a href="#template">最小可用模板</a>
+        <a href="#faq">疑難排解</a>
+        <a href="#checklist">驗收清單</a>
+      </nav>
+    </aside>
+
+    <main>
+      <div class="search-meta" id="searchMeta">
+        <span id="searchMetaText">已過濾顯示符合的內容</span>
+        <button id="clearSearch">清除</button>
+      </div>
+
+      <section id="overview" style="margin-top:24px">
+        <header class="hero">
+          <span class="eyebrow"><span class="dot"></span>對接文件</span>
+          <h1>書源 JSON 對接指南</h1>
+          <p>這份文件提供書源結構、必要欄位、功能區塊與常見配置方式。<br>可先快速開始建立骨架，再依 request / response 欄位說明完成來源支援的功能。</p>
+          <div class="quick-actions">
+            <a class="primary" href="#quickstart">快速開始</a>
+            <a href="#template">複製模板</a>
+            <a href="#modules">功能區塊</a>
+            <a href="#action-value">actionValue</a>
+            <a href="#faq">疑難排解</a>
+          </div>
+          <div class="meta-grid" aria-label="範例統計">
+            <a class="stat" href="#downloads"><b>18</b><span>範例與文檔</span></a>
+            <a class="stat" href="#modules"><b>6</b><span>常見功能區塊</span></a>
+            <a class="stat" href="#action-value"><b>9</b><span>actionValue 類型</span></a>
+            <a class="stat" href="#info"><b>99</b><span>自訂書源固定 type</span></a>
+          </div>
+        </header>
+
+        <div style="margin-top:36px">
+          <div class="sec-head"><span class="num">01</span>
+            <h2 style="margin:0">結構總覽</h2>
+          </div>
+          <p class="section-lead">最外層只有 <code>info</code> 與 <code>data</code>。先確認骨架正確，再分別補上請求規則與解析規則。</p>
+          <div class="schema" role="img" aria-label="書源 JSON 結構">
+            <span>{</span>
+            <span class="level-1">"info": { <span class="cmt">// 書源基本資訊</span> },</span>
+            <span class="level-1">"data": {</span>
+            <span class="level-2">"searchIndex": 0</span>
+            <span class="level-2">"request": { home?, detail, chapter?, content, category?, search? },</span>
+            <span class="level-2">"response": {</span>
+            <span class="level-3">config, hostsToReplace?, imageHost?,</span>
+            <span class="level-3">home?, detail, chapter, content, category?, search?</span>
+            <span class="level-2">}</span>
+            <span class="level-1">}</span>
+            <span>}</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="quickstart">
+        <div class="sec-head"><span class="num">02</span>
+          <h2 style="margin:0">快速開始<a href="#quickstart" class="anchor-link">#</a></h2>
+        </div>
+        <p class="section-lead">新增書源時可依下列順序處理。每一步都對應後續章節，可先完成最小可用版本，再補齊特殊情境。</p>
+        <div class="grid step-grid">
+          <div class="card step-card" data-step="1">
+            <h4>從範例複製骨架</h4>
+            <p>從 <a href="#downloads">下載範例</a> 找一個結構接近的書源，複製到新檔案。或直接使用 <a href="#template">最小模板</a></p>
+            <div class="card-foot"><a href="#downloads">examples/*.json</a></div>
+          </div>
+          <div class="card step-card" data-step="2">
+            <h4>設定 info 基本資料</h4>
+            <p>修改 <code>type</code>、<code>name</code>、<code>index</code><br>type 固定 99<br>index 建議使用 1000
+              以上的數字避免與既有書源衝突</p>
+            <div class="card-foot"><a href="#info">查看基本資訊欄位</a></div>
+          </div>
+          <div class="card step-card" data-step="3">
+            <h4>配 request 抓頁面</h4>
+            <p>填 <code>apiHost</code> / <code>apiPath</code> / <code>httpMethod</code> 遇到 GBK 編碼時，調整
+              <code>charEncodingRawValue</code><br>需要繞 Cloudflare 改 <code>requestMethodRawValue: 1</code>
+            </p>
+            <div class="card-foot"><a href="#request">查看請求規則</a></div>
+          </div>
+          <div class="card step-card" data-step="4">
+            <h4>配 response 解析資料</h4>
+            <p>用 DevTools 找 CSS selector，先寫 <code>listElement</code>，再寫各
+              <code>*Element</code>。<br><code>actionValue</code> 決定取什麼。<br>若解析結果包含站台 host，可用 <code>hostsToReplace</code>
+              移除指定 host 字串，讓後續 request 使用相同的 path 格式。
+            </p>
+            <div class="card-foot"><a href="#response">查看解析規則</a></div>
+          </div>
+          <div class="card step-card" data-step="5">
+            <h4>實機驗證</h4>
+            <p>將書源 JSON 匯入 App，先測基本流程：首頁、詳細頁、章節目錄、章節正文。<br>若來源有分類列表或搜尋時，再分別測試。</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="flow">
+        <div class="sec-head"><span class="num">03</span>
+          <h2 style="margin:0">流程一覽<a href="#flow" class="anchor-link">#</a></h2>
+        </div>
+        <p class="section-lead">每個書源建議先驗證「首頁 → 詳細 → 章節 → 正文」主流程。<br>分類與搜尋屬於額外功能，若網站不提供時，可省略對應規則。<br>同一段要同時檢查 request 與
+          response，因為 URL 組法會直接影響解析結果的路徑格式。</p>
+        <div class="flow flow-4">
+          <div class="flow-step"><b>建立 info</b><span>名稱、索引、是否允許搜尋與下載</span></div>
+          <div class="flow-step"><b>配 request</b><span>host、path、method、編碼、WebView、header</span></div>
+          <div class="flow-step"><b>配 response</b><span>CSS selector、actionValue、hostsToReplace 與 pathRegex
+              路徑正規化一併完成</span></div>
+          <div class="flow-step"><b>跑 validator 實測</b><span>先測首頁、詳細、章節、正文；分類、搜尋有提供時再測</span></div>
+        </div>
+      </section>
+
+      <section id="info">
+        <div class="sec-head"><span class="num">04</span>
+          <h2 style="margin:0">info：書源資訊<a href="#info" class="anchor-link">#</a></h2>
+        </div>
+        <p class="section-lead"><code>info</code> 書源基本資訊，例如書源名稱、是否允許搜尋、是否允許下載。<code>index</code> 建議使用 1000 以上避免與既有書源衝突。
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>欄位</th>
+                <th>型別</th>
+                <th>必填</th>
+                <th>用途</th>
+                <th>對接注意</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>type</code></td>
+                <td>Int</td>
+                <td><span class="tag required">必</span></td>
+                <td>書源類型</td>
+                <td>自訂書源固定 <code>99</code></td>
+              </tr>
+              <tr>
+                <td><code>name</code></td>
+                <td>String</td>
+                <td><span class="tag required">必</span></td>
+                <td>顯示名稱</td>
+                <td>書源標題</td>
+              </tr>
+              <tr>
+                <td><code>alias</code></td>
+                <td>String</td>
+                <td><span class="tag optional">否</span></td>
+                <td>顯示別名</td>
+                <td>為空值時，系統預設使用name <code>name</code></td>
+              </tr>
+              <tr>
+                <td><code>index</code></td>
+                <td>Int</td>
+                <td><span class="tag required">必</span></td>
+                <td>唯一索引</td>
+                <td>建議 1000+，新增取現有最大 +1</td>
+              </tr>
+              <tr>
+                <td><code>sortIndex</code></td>
+                <td>Int</td>
+                <td><span class="tag required">必</span></td>
+                <td>排序索引</td>
+                <td>數值越小排序越前面</td>
+              </tr>
+              <tr>
+                <td><code>version</code></td>
+                <td>Int</td>
+                <td><span class="tag required">必</span></td>
+                <td>規則版本</td>
+                <td>初始 <code>1</code>，更新規則時遞增</td>
+              </tr>
+              <tr>
+                <td><code>enabled</code></td>
+                <td>Bool</td>
+                <td><span class="tag required">必</span></td>
+                <td>是否啟用</td>
+                <td>固定 <code>true</code></td>
+              </tr>
+              <tr>
+                <td><code>allowSearch</code></td>
+                <td>Bool</td>
+                <td><span class="tag required">必</span></td>
+                <td>是否允許搜尋</td>
+                <td>不支援時設 <code>false</code>，並可省略 search 規則</td>
+              </tr>
+              <tr>
+                <td><code>allowDownload</code></td>
+                <td>Bool</td>
+                <td><span class="tag required">必</span></td>
+                <td>是否允許下載</td>
+                <td>章節內容被拆成分頁，且從目錄 URL 無法得知內容頁數時設 <code>false</code></td>
+              </tr>
+              <tr>
+                <td><code>imageURL</code></td>
+                <td>String</td>
+                <td><span class="tag optional">否</span></td>
+                <td>列表圖示</td>
+                <td>站台 logo / favicon</td>
+              </tr>
+              <tr>
+                <td><code>backgroundColor</code></td>
+                <td>[Double]</td>
+                <td><span class="tag optional">否</span></td>
+                <td>列表背景</td>
+                <td>RGBA 陣列，如 <code>[230,240,235,1]</code>；A 範圍 0 ~ 1</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="request">
+        <div class="sec-head"><span class="num">05</span>
+          <h2 style="margin:0">request：請求規則<a href="#request" class="anchor-link">#</a></h2>
+        </div>
+        <p class="section-lead">每個頁面請求都有兩塊：<code>settings</code> 管 URL / method / header，<code>config</code>
+          管編碼與載入方式。先確認要用 URLSession 或 WebView，再組 URL。</p>
+
+        <div class="grid">
+          <div class="card">
+            <h3>config — 載入與編碼</h3>
+            <div class="tag-row">
+              <span class="tag teal">charEncodingRawValue: 0 GBK</span>
+              <span class="tag blue">1 BIG5</span>
+              <span class="tag">2 UTF-8</span>
+            </div>
+            <div class="tag-row">
+              <span class="tag amber">requestMethodRawValue: 0 URLSession</span>
+              <span class="tag rose">1 WebView</span>
+            </div>
+            <p style="margin-top:10px"><code>charEncodingRawValue</code>
+              根據來源編碼進行調整<br><code>requestMethodRawValue</code>根據來源進行調整，1 可處理 Cloudflare，若需跨頁保留 cookie，再設定
+              <code>websiteDataStoreRawValue: 1</code>。
+            </p>
+          </div>
+          <div class="card">
+            <h3>settings — URL 組裝</h3>
+            <p><code>apiHost</code> 不含結尾斜線；<code>apiPath</code> 以 <code>/</code>
+              開頭。組合順序：<code>apiHost + apiPathPrefix + apiPath + 分頁前綴/索引 + apiPathSuffix + extraApiPathSuffix</code>。</p>
+            <p style="margin-top:8px">分頁常用
+              <code>apiPageIndexPrefix</code>、<code>apiPathSuffix</code>、<code>apiPathReplacements</code>；搜尋看
+              <code>apiQueryTypeRawValue</code> 決定 query 還是 path 模式。
+            </p>
+          </div>
+        </div>
+
+        <h3 style="margin-top:22px">settings 欄位 — 按用途分群</h3>
+        <p class="section-lead" style="margin-bottom:12px">先依用途找到欄位群組，再對照範例填寫實際值。</p>
+        <div class="spec-grid">
+          <div class="spec-group">
+            <header><span class="spec-badge required">必填基本</span><span class="spec-hint">每個 request 都要有</span></header>
+            <ul class="spec-list">
+              <li><code>apiHost</code><span class="t">String</span><span class="d">請求 host，不含結尾 <code>/</code></span>
+              </li>
+              <li><code>apiPath</code><span class="t">String</span><span class="d">請求路徑，以 <code>/</code> 開頭</span></li>
+              <li><code>httpMethod</code><span class="t">String</span><span class="d">僅支援 <code>GET</code> /
+                  <code>POST</code></span></li>
+            </ul>
+          </div>
+
+          <div class="spec-group">
+            <header><span class="spec-badge">URL 組裝</span><span class="spec-hint">分頁 / 第一頁特殊路徑</span></header>
+            <ul class="spec-list">
+              <li><code>apiPathPrefix</code><span class="t">String</span><span class="d">附加在 apiPath 之前</span></li>
+              <li><code>apiPathSuffix</code><span class="t">String</span><span class="d">如 <code>.html</code></span>
+              </li>
+              <li><code>apiPageIndexPrefix</code><span class="t">String</span><span class="d">分頁索引前綴，分類常用</span></li>
+              <li><code>extraApiPathSuffix</code><span class="t">String</span><span class="d">關鍵字寫入路徑後再加固定段</span></li>
+              <li><code>apiPathReplacements</code><span class="t">Map</span><span class="d">第一頁與後續頁 URL 不同時用</span></li>
+              <li><code>finalURLReplacements</code><span class="t">Map</span><span class="d">組合後對最終 URL 做整段替換</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="spec-group">
+            <header><span class="spec-badge">查詢參數</span><span class="spec-hint">搜尋 / 分類 query</span></header>
+            <ul class="spec-list">
+              <li><code>apiQueryKey</code><span class="t">String</span><span class="d">搜尋關鍵字鍵，系統會塞入關鍵字</span></li>
+              <li><code>apiQueryParams</code><span class="t">Map</span><span class="d">其餘固定 query 參數</span></li>
+              <li><code>apiQueryTypeRawValue</code><span class="t">Int</span><span class="d">0 無 / 1 參數 / 2 路徑</span>
+              </li>
+              <li><code>apiQueryPageIndexKey</code><span class="t">String</span><span class="d">分頁帶 query 時用</span></li>
+              <li><code>apiQueryLangRawValue</code><span class="t">Int</span><span class="d">0 繁體 / 1 簡體</span></li>
+              <li><code>apiQueryValueFromPath</code><span class="t">Map</span><span class="d">從 path 抽出 query
+                  值，分類常用</span></li>
+            </ul>
+          </div>
+
+          <div class="spec-group">
+            <header><span class="spec-badge">分頁控制</span><span class="spec-hint">分類列表</span></header>
+            <ul class="spec-list">
+              <li><code>shouldIgnorePageIndex</code><span class="t">Bool</span><span class="d">無分頁的分類設 true</span></li>
+              <li><code>ignorePageIndexByKeywords</code><span class="t">[String]</span><span
+                  class="d">含特定關鍵字才忽略分頁</span></li>
+            </ul>
+          </div>
+
+          <div class="spec-group">
+            <header><span class="spec-badge">請求控制</span><span class="spec-hint">header / 延遲 / 編碼</span></header>
+            <ul class="spec-list">
+              <li><code>httpHeaders</code><span class="t">Map</span><span class="d">值為 <code>request_url</code>
+                  代入完整連結</span></li>
+              <li><code>timeout</code><span class="t">Double</span><span class="d">逾時秒數，預設 45</span></li>
+              <li><code>delaySeconds</code><span class="t">Double</span><span class="d">固定延遲，預設 0</span></li>
+              <li><code>randomDelaySeconds</code><span class="t">[Double]</span><span class="d">隨機區間
+                  <code>[min, max]</code></span></li>
+              <li><code>needsURLEncoding</code><span class="t">Bool</span><span class="d">GET 已自動編碼，避免雙重</span></li>
+              <li><code>needsCustomUserAgent</code><span class="t">Bool</span><span class="d">使用客製 UA</span></li>
+            </ul>
+          </div>
+
+          <div class="spec-group">
+            <header><span class="spec-badge">動態參數</span><span class="spec-hint">JS 加密 / 簽名</span></header>
+            <ul class="spec-list">
+              <li><code>jsScripts</code><span class="t">[JSScript]</span><span class="d">注入 JS 算 query。系統自動帶入
+                  <code>keywords</code></span></li>
+            </ul>
+          </div>
+        </div>
+
+        <h3 style="margin-top:24px">config 欄位</h3>
+        <div class="spec-grid">
+          <div class="spec-group">
+            <header><span class="spec-badge">編碼 / 載入</span></header>
+            <ul class="spec-list">
+              <li><code>charEncodingRawValue</code><span class="t">Int</span><span class="d">Payload 編碼：0 GBK / 1 BIG5 /
+                  2 UTF-8（預設）</span></li>
+              <li><code>requestMethodRawValue</code><span class="t">Int</span><span class="d">0 URLSession / 1
+                  WebView</span></li>
+              <li><code>websiteDataStoreRawValue</code><span class="t">Int</span><span class="d">0 不持久化 / 1 持久化；cookie
+                  跨頁時用 1</span></li>
+            </ul>
+          </div>
+          <div class="spec-group">
+            <header><span class="spec-badge">WebView 注入</span></header>
+            <ul class="spec-list">
+              <li><code>bodySelector</code><span class="t">String</span><span class="d">等到此元素出現再解析</span></li>
+              <li><code>mainFrameOnly</code><span class="t">Bool</span><span class="d">true 僅主頁面 / false 含 iframe</span>
+              </li>
+              <li><code>injectionTime</code><span class="t">Int</span><span class="d">0 頁面開始前 / 1 DOM 建完</span></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout" style="margin-top:14px">
+          <span class="icon">!</span>
+          <div>
+            <strong>搜尋模式判斷</strong>
+            <code>apiQueryTypeRawValue: 1</code> 代表 GET query，<code>2</code> 代表把關鍵字寫入 path。Path
+            模式通常不設<code>needsURLEncoding: true</code>，避免雙重編碼。
+          </div>
+        </div>
+      </section>
+
+      <section id="response">
+        <div class="sec-head"><span class="num">06</span>
+          <h2 style="margin:0">response：解析規則<a href="#response" class="anchor-link">#</a></h2>
+        </div>
+        <p class="section-lead">將 HTML 或 JSON 轉成 App 可用資料。通常先用 <code>listElement</code> 找出多筆項目，如首頁、章節、搜尋等功能，詳情，再用各種
+          <code>*Element</code> 從每個項目內取值。
+        </p>
+
+        <div class="grid three">
+          <div class="card">
+            <h3>config</h3>
+            <p>Response 編碼與 Cloudflare 驗證設定。</p>
+            <div class="tag-row">
+              <span class="tag">charEncodingRawValue</span>
+              <span class="tag amber">challengeKeywords</span>
+              <span class="tag amber">challengeVerifiedKeywords</span>
+              <span class="tag">shouldReload</span>
+              <span class="tag">authStorageTypeRawValue</span>
+              <span class="tag">waitForCookie</span>
+            </div>
+          </div>
+          <div class="card">
+            <h3>hostsToReplace</h3>
+            <p>解析 path 時，系統會把結果中符合清單的 host 字串替換成空字串。<br>用途是讓絕對連結與相對連結輸出成一致的 path 格式。</p>
+            <p style="margin-top:8px">只會處理列出的字串。<br>同站若同時有 <code>https://</code>、<code>http://</code>、<code>www</code>
+              或其他鏡像網域，需分別列入。</p>
+          </div>
+          <div class="card">
+            <h3>imageHost</h3>
+            <p>封面解析到相對路徑時補圖片 host。多個圖片網域時須確認真實 CDN。</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="parse-element">
+        <div class="sec-head"><span class="num">07</span>
+          <h2 style="margin:0">ParseElement 欄位<a href="#parse-element" class="anchor-link">#</a></h2>
+        </div>
+        <p class="section-lead">所有 <code>*Element</code> 都是 ParseElement。必要欄位通常是 <code>cssSelector</code> 與
+          <code>actionValue</code>，其他欄位用於屬性提取、文字清理、前後綴補齊、JSON 包裝或特殊字串解析。
+        </p>
+
+        <div class="spec-grid">
+          <div class="spec-group">
+            <header><span class="spec-badge required">必填核心</span><span class="spec-hint">每個 Element 必填</span></header>
+            <ul class="spec-list">
+              <li><code>cssSelector</code><span class="t">String</span><span class="d">CSS 選擇器；定位元素</span></li>
+              <li><code>actionValue</code><span class="t">Int</span><span class="d">解析類型，見 <a href="#action-value">9
+                    種對照</a></span></li>
+            </ul>
+          </div>
+
+          <div class="spec-group">
+            <header><span class="spec-badge">選擇與屬性</span><span class="spec-hint">取屬性 / 二級結構</span></header>
+            <ul class="spec-list">
+              <li><code>attributeKey</code><span class="t">String</span><span class="d">屬性名稱（<code>href</code> /
+                  <code>src</code> / <code>data-src</code>）</span></li>
+              <li><code>selectCssSelector</code><span class="t">String</span><span class="d">先定位指定元素，多筆中取一筆</span></li>
+              <li><code>selectIndex</code><span class="t">Int</span><span class="d">selectCssSelector 多結果取索引</span></li>
+              <li><code>cssSelector2</code><span class="t">String</span><span class="d">同頁兩種結構備援</span></li>
+              <li><code>selectCssSelector2</code><span class="t">String</span><span class="d">備援的指定元素</span></li>
+              <li><code>selectIndex2</code><span class="t">Int</span><span class="d">備援的索引</span></li>
+            </ul>
+          </div>
+
+          <div class="spec-group">
+            <header><span class="spec-badge">文字清理</span><span class="spec-hint">取得後處理</span></header>
+            <ul class="spec-list">
+              <li><code>prefix</code><span class="t">String</span><span class="d">取得後加前綴（拼 URL 用）</span></li>
+              <li><code>suffix</code><span class="t">String</span><span class="d">取得後加後綴</span></li>
+              <li><code>separator</code><span class="t">String</span><span class="d">正文段落串接符號</span></li>
+              <li><code>replacements</code><span class="t">Map</span><span class="d">key=結果文字 / value=要被替換的字</span></li>
+              <li><code>blankReplacements</code><span class="t">Map</span><span class="d">替換為空白；key <code>"0"</code> 字面
+                  / <code>"1"</code> 正則</span></li>
+              <li><code>rawContentReplacements</code><span class="t">Map</span><span class="d">解析前對原始內容替換</span></li>
+              <li><code>removeElements</code><span class="t">[String]</span><span class="d">解析前移除子元素（廣告 / script）</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="spec-group">
+            <header><span class="spec-badge teal">陣列收集</span><span class="spec-hint">actionValue: 2</span></header>
+            <ul class="spec-list">
+              <li><code>collectionSeparator</code><span class="t">String</span><span class="d">array 合併符號</span></li>
+              <li><code>collectionActionValue</code><span class="t">Int</span><span class="d">陣列內元素解析類型</span></li>
+              <li><code>collectionValueIndexes</code><span class="t">[Int]</span><span class="d">取陣列指定索引</span></li>
+            </ul>
+          </div>
+
+          <div class="spec-group">
+            <header><span class="spec-badge amber">HTML 控制</span><span class="spec-hint">正文清理常用</span></header>
+            <ul class="spec-list">
+              <li><code>invalidTags</code><span class="t">[String]</span><span class="d">含此標籤則略過（actionValue: 22）</span>
+              </li>
+              <li><code>replaceTags</code><span class="t">[String]</span><span class="d">標籤替換為換行（p / br 互轉）</span></li>
+              <li><code>shouldNormalise</code><span class="t">Bool</span><span class="d">解析前補齊未閉合標籤</span></li>
+              <li><code>shouldUnescapeUnicode</code><span class="t">Bool</span><span class="d">解 <code>\uXXXX</code> →
+                  文字</span></li>
+            </ul>
+          </div>
+
+          <div class="spec-group">
+            <header><span class="spec-badge blue">特殊解析</span><span class="spec-hint">JSON / 非標準字串</span></header>
+            <ul class="spec-list">
+              <li><code>parseableItems</code><span class="t">[Item]</span><span class="d">裁切非標準字串（actionValue:
+                  20）</span></li>
+              <li><code>isJSONFormat</code><span class="t">Bool</span><span class="d">原始內容是 JSON，包成
+                  <code>&lt;ul&gt;&lt;li&gt;</code></span></li>
+              <li><code>jsonKey</code><span class="t">String</span><span class="d">只取 JSON 某 key</span></li>
+              <li><code>orderedKeys</code><span class="t">[String]</span><span class="d">JSON 鍵輸出順序，用
+                  <code>nth-of-type</code> 對應</span></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:18px">
+          <h3>isJSONFormat — JSON 回應處理</h3>
+          <p>當某環節（常見於 <code>chapter</code>、<code>search</code> 的 AJAX 介面）回傳 JSON 而非 HTML 時，於該環節的
+            <code>listElement</code> 設 <code>isJSONFormat: true</code>。框架會先把 JSON 遞迴展開成 HTML 列表 —— 物件／陣列的每個值包成
+            <code>&lt;li&gt;</code>，最外層套 <code>&lt;div id="json-content"&gt;</code> —— 之後即可照常用 <code>cssSelector</code>
+            解析。
+          </p>
+          <ul>
+            <li><code>jsonKey</code>：只包裝指定鍵的內容。如 API 回 <code>{"status":0,"data":[…]}</code>，設
+              <code>"data"</code> 可略過外層 <code>status</code>。
+            </li>
+            <li><code>orderedKeys</code>：指定輸出欄位與順序；子元素再依此順序用 <code>nth-of-type(n)</code> 取值，未列出的鍵會被忽略。</li>
+            <li><code>cssSelector</code> 一律從 <code>#json-content</code> 起算，列表通常為
+              <code>#json-content &gt; ul &gt; li</code>。
+            </li>
+            <li>建議搭配 <code>shouldUnescapeUnicode</code>（還原 <code>\uXXXX</code>）與 <code>shouldNormalise</code>（補齊標籤）。
+            </li>
+            <li>JSON 只給 ID 而非完整路徑時，用 <code>prefix</code> / <code>suffix</code> 拼回合法路徑。</li>
+          </ul>
+          <div class="pair-grid">
+            <div class="card">
+              <h4>JSON → HTML 轉換</h4>
+              <div class="code-block"><button class="copy-btn">複製</button>
+                <pre><code>// API 原始回應
+{ "data": [ { "ordernum": "1", "title": "第一章" } ] }
+
+// 框架自動轉換後（供 cssSelector 解析）
+&lt;div id="json-content"&gt;
+  &lt;ul&gt;&lt;li&gt;
+    &lt;ul&gt;&lt;li&gt;1&lt;/li&gt;&lt;li&gt;第一章&lt;/li&gt;&lt;/ul&gt;
+  &lt;/li&gt;&lt;/ul&gt;
+&lt;/div&gt;</code></pre>
+              </div>
+            </div>
+            <div class="card">
+              <h4>response.chapter 配置</h4>
+              <div class="code-block"><button class="copy-btn">複製</button>
+                <pre><code>{
+  "chapter": {
+    "listElement": {
+      "isJSONFormat": true,
+      "jsonKey": "data",
+      "orderedKeys": ["ordernum", "title"],
+      "cssSelector": "#json-content > ul > li",
+      "shouldUnescapeUnicode": true,
+      "shouldNormalise": true
+    },
+    "pathElement": { "cssSelector": "ul li:nth-of-type(1)", "actionValue": 0,
+                     "prefix": "p", "suffix": ".html" },
+    "nameElement": { "cssSelector": "ul li:nth-of-type(2)", "actionValue": 0 }
+  }
+}</code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="action-value">
+        <div class="sec-head"><span class="num">08</span>
+          <h2 style="margin:0">actionValue 對照<a href="#action-value" class="anchor-link">#</a></h2>
+        </div>
+        <p class="section-lead"><code>actionValue</code> 決定從元素內取得哪一種內容。常用值是 <code>0</code> 取文字、<code>10</code>
+          取屬性、<code>2</code> 多筆合併、<code>22</code> 解析段落正文。</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>值</th>
+                <th>名稱</th>
+                <th>用途</th>
+                <th>常見搭配</th>
+                <th>典型情境</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>0</code></td>
+                <td>text</td>
+                <td>取元素文字</td>
+                <td><code>replacements</code>, <code>blankReplacements</code></td>
+                <td>書名、作者、章節名</td>
+              </tr>
+              <tr>
+                <td><code>2</code></td>
+                <td>array</td>
+                <td>取多元素合併</td>
+                <td><code>collectionSeparator</code>, <code>collectionValueIndexes</code>,
+                  <code>collectionActionValue</code>
+                </td>
+                <td>多個分類標籤、多個作者</td>
+              </tr>
+              <tr>
+                <td><code>5</code></td>
+                <td>lastText</td>
+                <td>取最後一個文字</td>
+                <td>—</td>
+                <td>同組連結中的「下一章」</td>
+              </tr>
+              <tr>
+                <td><code>6</code></td>
+                <td>lastAttr</td>
+                <td>取最後一個屬性</td>
+                <td><code>attributeKey</code></td>
+                <td>同組連結中的「下一章」href</td>
+              </tr>
+              <tr>
+                <td><code>9</code></td>
+                <td>firstText</td>
+                <td>取第一個文字</td>
+                <td>—</td>
+                <td>同組連結中的「上一章」</td>
+              </tr>
+              <tr>
+                <td><code>10</code></td>
+                <td>firstAttr</td>
+                <td>取第一個屬性</td>
+                <td><code>attributeKey</code></td>
+                <td>連結 href、圖片 src、meta content</td>
+              </tr>
+              <tr>
+                <td><code>19</code></td>
+                <td>brTag</td>
+                <td>用 br 切正文</td>
+                <td><code>separator</code>, <code>removeElements</code></td>
+                <td>傳統小說頁 <code>&lt;br&gt;</code> 換行</td>
+              </tr>
+              <tr>
+                <td><code>20</code></td>
+                <td>component</td>
+                <td>裁切非標準字串</td>
+                <td><code>parseableItems</code></td>
+                <td>資料藏在混合字串中</td>
+              </tr>
+              <tr>
+                <td><code>22</code></td>
+                <td>pTag</td>
+                <td>用 p 標籤切正文</td>
+                <td><code>separator</code>, <code>invalidTags</code>, <code>replaceTags</code></td>
+                <td>現代小說頁 <code>&lt;p&gt;</code> 段落</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="modules">
+        <div class="sec-head"><span class="num">09</span>
+          <h2 style="margin:0">功能區塊對照<a href="#modules" class="anchor-link">#</a></h2>
+        </div>
+        <p class="section-lead">這裡列出書源常見的 request / response 區塊。<br>Detail、Chapter、Content
+          通常是閱讀主流程。<br>Home、Category、Search 則依來源是否提供對應功能決定是否配置；若 <code>inPage: true</code>，代表資料在同一頁，可省略額外 request。</p>
+
+        <div class="modules">
+          <div class="module-nav" role="tablist">
+            <button class="active" data-tab="home">Home 首頁</button>
+            <button data-tab="detail">Detail 詳細</button>
+            <button data-tab="chapter">Chapter 目錄</button>
+            <button data-tab="content">Content 正文</button>
+            <button data-tab="category">Category 分類</button>
+            <button data-tab="search">Search 搜尋</button>
+          </div>
+
+          <div class="module-stack">
+            <div class="module-panel active" data-panel="home">
+              <div class="card">
+                <h3>Home — 首頁推薦與分類</h3>
+                <p>首頁通常解析推薦小說與分類標籤。<code>request.home.inPage: true</code> 代表分類也在首頁；<code>false</code> 則需補
+                  <code>home.category</code> 請求。<code>response.home</code> 同時包含 <code>main</code>（推薦）與
+                  <code>category</code>（分類）。
+                </p>
+                <div class="tag-row">
+                  <span class="tag">main</span>
+                  <span class="tag">category?</span>
+                  <span class="tag teal">template (0 grid / 1 image / 2 num)</span>
+                  <span class="tag blue">pathRegex</span>
+                  <span class="tag">excludePaths</span>
+                </div>
+              </div>
+              <div class="pair-grid">
+                <div class="card">
+                  <h4>request.home</h4>
+                  <div class="code-block"><button class="copy-btn">複製</button>
+                    <pre><code>{
+  "home": {
+    "main": {
+      "settings": {
+        "apiHost": "https://example.com",
+        "apiPath": "/",
+        "httpMethod": "GET"
+      },
+      "config": { "charEncodingRawValue": 2 }
+    },
+    "inPage": true
+  }
+}</code></pre>
+                  </div>
+                </div>
+                <div class="card">
+                  <h4>response.home</h4>
+                  <div class="code-block"><button class="copy-btn">複製</button>
+                    <pre><code>{
+  "home": {
+    "template": 0,
+    "main": {
+      "listElement": { "cssSelector": ".book-list li" },
+      "nameElement":  { "cssSelector": "a", "actionValue": 0 },
+      "pathElement":  { "cssSelector": "a", "actionValue": 10, "attributeKey": "href" },
+      "imageElement": { "cssSelector": "img", "actionValue": 10, "attributeKey": "src" },
+      "pathRegex": "^/book/\\d+/?$"
+    },
+    "category": {
+      "listElement": { "cssSelector": "nav.cat a" },
+      "nameElement": { "cssSelector": "self", "actionValue": 0 },
+      "pathElement": { "cssSelector": "self", "actionValue": 10, "attributeKey": "href" }
+    }
+  }
+}</code></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="module-panel" data-panel="detail">
+              <div class="card">
+                <h3>Detail — 書籍資訊</h3>
+                <p>解析封面、作者、簡介、分類、更新時間與最新章節名。若章節目錄不在詳細頁，需提供 <code>chapterPathElement</code> +
+                  <code>chapterPathRegex</code>；多數站章節在同頁，省略即可。
+                </p>
+                <div class="tag-row">
+                  <span class="tag">imageElement</span>
+                  <span class="tag">authorElement</span>
+                  <span class="tag">summaryElement</span>
+                  <span class="tag">categoryElement</span>
+                  <span class="tag">updatedTimeElement</span>
+                  <span class="tag rose">chapterPathElement (跨頁時)</span>
+                </div>
+              </div>
+              <div class="pair-grid">
+                <div class="card">
+                  <h4>request.detail</h4>
+                  <div class="code-block"><button class="copy-btn">複製</button>
+                    <pre><code>{
+  "detail": {
+    "main": {
+      "settings": { "apiHost": "https://example.com", "apiPath": "/", "httpMethod": "GET" },
+      "config":   { "charEncodingRawValue": 2 }
+    },
+    "inPage": false
+  }
+}</code></pre>
+                  </div>
+                </div>
+                <div class="card">
+                  <h4>response.detail</h4>
+                  <div class="code-block"><button class="copy-btn">複製</button>
+                    <pre><code>{
+  "detail": {
+    "imageElement":  { "cssSelector": ".cover img", "actionValue": 10, "attributeKey": "src" },
+    "authorElement": { "cssSelector": ".author",    "actionValue": 0 },
+    "summaryElement":{ "cssSelector": ".intro",     "actionValue": 0 },
+    "categoryElement":{ "cssSelector":".tag",       "actionValue": 2,  "collectionSeparator": ",",
+                         "collectionActionValue": 0 },
+    "updatedTimeElement":{ "cssSelector": ".updated","actionValue": 0 },
+    "updatedTimeFormat": "yyyy-MM-dd"
+  }
+}</code></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="module-panel" data-panel="chapter">
+              <div class="card">
+                <h3>Chapter — 章節目錄</h3>
+                <p>核心欄位是 <code>listElement</code>、<code>pathElement</code>、<code>nameElement</code>。<br>完整目錄用
+                  <code>isPartial: false</code>。<br>分頁目錄則需提供分頁請求與頁數解析方式，例如 <code>pageCount</code> 或
+                  <code>pageCountElement</code>。AJAX 章節列表可用 <code>isJSONFormat</code> 處理。
+                </p>
+                <div class="tag-row">
+                  <span class="tag">listElement</span>
+                  <span class="tag">pathElement</span>
+                  <span class="tag">nameElement</span>
+                  <span class="tag amber">reversed</span>
+                  <span class="tag amber">sortTypeRawValue</span>
+                  <span class="tag">subListElement</span>
+                  <span class="tag">pageCountElement</span>
+                  <span class="tag rose">isJSONFormat</span>
+                </div>
+              </div>
+              <div class="pair-grid">
+                <div class="card">
+                  <h4>request.chapter</h4>
+                  <div class="code-block"><button class="copy-btn">複製</button>
+                    <pre><code>{
+  "chapter": {
+    "main": {
+      "settings": { "apiHost": "https://example.com", "apiPath": "/", "httpMethod": "GET" },
+      "config":   { "charEncodingRawValue": 2 }
+    },
+    "isPartial": false
+  }
+}</code></pre>
+                  </div>
+                </div>
+                <div class="card">
+                  <h4>response.chapter</h4>
+                  <div class="code-block"><button class="copy-btn">複製</button>
+                    <pre><code>{
+  "chapter": {
+    "listElement": { "cssSelector": ".chapter-list a" },
+    "nameElement": { "cssSelector": "self", "actionValue": 0 },
+    "pathElement": { "cssSelector": "self", "actionValue": 10, "attributeKey": "href" },
+    "reversed": false
+  }
+}</code></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="module-panel" data-panel="content">
+              <div class="card">
+                <h3>Content — 章節正文</h3>
+                <p>必填 <code>chapterPathRegex</code>、<code>nameElement</code>、<code>contentElement</code>、上一章與下一章路徑。相對檔名如
+                  <code>2.html</code> 用 <code>shouldReplaceBookPath</code> 接回書籍路徑；複雜路徑用
+                  <code>isLastPathComponentReplaced</code> + 前後綴重組。
+                </p>
+                <div class="tag-row">
+                  <span class="tag rose">chapterPathRegex</span>
+                  <span class="tag">contentElement</span>
+                  <span class="tag">nameElement</span>
+                  <span class="tag blue">lastChapterPathElement</span>
+                  <span class="tag blue">nextChapterPathElement</span>
+                  <span class="tag amber">shouldReplaceBookPath</span>
+                  <span class="tag amber">isLastPathComponentReplaced</span>
+                </div>
+              </div>
+              <div class="pair-grid">
+                <div class="card">
+                  <h4>request.content</h4>
+                  <div class="code-block"><button class="copy-btn">複製</button>
+                    <pre><code>{
+  "content": {
+    "settings": { "apiHost": "https://example.com", "apiPath": "/", "httpMethod": "GET" },
+    "config":   { "charEncodingRawValue": 2 }
+  }
+}</code></pre>
+                  </div>
+                </div>
+                <div class="card">
+                  <h4>response.content (pTag 正文)</h4>
+                  <div class="code-block"><button class="copy-btn">複製</button>
+                    <pre><code>{
+  "content": {
+    "chapterPathRegex": "^/book/\\d+/\\d+\\.html$",
+    "nameElement":    { "cssSelector": "h1.title", "actionValue": 0 },
+    "contentElement": {
+      "cssSelector": "div.txtnav",
+      "actionValue": 22,
+      "separator": "\n",
+      "removeElements": ["script", "style", ".ad"],
+      "invalidTags":   ["&lt;h", "&lt;script"],
+      "replaceTags":   ["&lt;p&gt;", "&lt;/p&gt;", "&lt;br&gt;", "&lt;br /&gt;"]
+    },
+    "lastChapterPathElement": { "cssSelector": ".prev", "actionValue": 10, "attributeKey": "href" },
+    "nextChapterPathElement": { "cssSelector": ".next", "actionValue": 10, "attributeKey": "href" }
+  }
+}</code></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="module-panel" data-panel="category">
+              <div class="card">
+                <h3>Category — 分類列表</h3>
+                <p>分類列表需要 <code>pageSize</code> 與列表解析欄位。<br>沒分頁時於 request 設
+                  <code>shouldIgnorePageIndex: true</code>。<br>第一頁 URL 特殊時使用
+                  <code>apiPathReplacements</code>。<br><code>pageCount</code> / <code>pageCountElement</code> 都不給時，系統不會依
+                  <code>pageSize</code> 自動續抓，單次解析完成後即停止。
+                </p>
+                <div class="tag-row">
+                  <span class="tag">pageSize</span>
+                  <span class="tag">pageCount?</span>
+                  <span class="tag amber">apiPathReplacements</span>
+                  <span class="tag">listElement</span>
+                  <span class="tag">pathElement</span>
+                  <span class="tag">nameElement</span>
+                </div>
+              </div>
+              <div class="pair-grid">
+                <div class="card">
+                  <h4>request.category</h4>
+                  <div class="code-block"><button class="copy-btn">複製</button>
+                    <pre><code>{
+  "category": {
+    "main": {
+      "settings": {
+        "apiHost": "https://example.com",
+        "apiPath": "/class_1_1.html",
+        "apiPathReplacements": { "_1.html": ".html" },
+        "apiPageIndexPrefix": "_",
+        "apiPathSuffix": ".html",
+        "httpMethod": "GET"
+      },
+      "config": { "charEncodingRawValue": 2 }
+    }
+  }
+}</code></pre>
+                  </div>
+                </div>
+                <div class="card">
+                  <h4>response.category</h4>
+                  <div class="code-block"><button class="copy-btn">複製</button>
+                    <pre><code>{
+  "category": {
+    "pageSize": 20,
+    "listElement": { "cssSelector": ".novel-list li" },
+    "nameElement": { "cssSelector": ".name", "actionValue": 0 },
+    "pathElement": { "cssSelector": "a",     "actionValue": 10, "attributeKey": "href" },
+    "imageElement":{ "cssSelector": "img",   "actionValue": 10, "attributeKey": "src" },
+    "authorElement":{ "cssSelector":".author","actionValue": 0 }
+  }
+}</code></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="module-panel" data-panel="search">
+              <div class="card">
+                <h3>Search — 搜尋</h3>
+                <p>多筆結果用 <code>mPathElement</code> / <code>mNameElement</code>；自動跳轉到單筆詳細頁時，補 <code>sPathElement</code> /
+                  <code>sNameElement</code> 等 s-* 欄位，並用 <code>cssSelector</code>
+                  指定該筆根節點。<code>apiQueryTypeRawValue</code> 決定 query / path 模式。
+                </p>
+                <div class="tag-row">
+                  <span class="tag teal">GET / POST</span>
+                  <span class="tag">listElement</span>
+                  <span class="tag">mNameElement</span>
+                  <span class="tag">mPathElement</span>
+                  <span class="tag blue">sNameElement?</span>
+                  <span class="tag blue">sPathElement?</span>
+                  <span class="tag amber">apiQueryTypeRawValue</span>
+                  <span class="tag amber">apiQueryKey</span>
+                </div>
+              </div>
+              <div class="pair-grid">
+                <div class="card">
+                  <h4>request.search (GET query)</h4>
+                  <div class="code-block"><button class="copy-btn">複製</button>
+                    <pre><code>{
+  "search": {
+    "settings": {
+      "apiHost": "https://example.com",
+      "apiPath": "/search.html",
+      "httpMethod": "GET",
+      "apiQueryKey": "q",
+      "apiQueryTypeRawValue": 1
+    },
+    "config": { "charEncodingRawValue": 2 }
+  }
+}</code></pre>
+                  </div>
+                </div>
+                <div class="card">
+                  <h4>response.search (多筆 + 單筆跳轉)</h4>
+                  <div class="code-block"><button class="copy-btn">複製</button>
+                    <pre><code>{
+  "search": {
+    "listElement": { "cssSelector": ".result-list li" },
+    "mNameElement": { "cssSelector": ".name", "actionValue": 0 },
+    "mPathElement": { "cssSelector": "a",     "actionValue": 10, "attributeKey": "href" },
+    "cssSelector": "div.book",
+    "sNameElement": { "cssSelector": "h1",       "actionValue": 0 },
+    "sPathElement": { "cssSelector": "link[rel=canonical]", "actionValue": 10,
+                       "attributeKey": "href" }
+  }
+}</code></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div><!-- /.module-stack -->
+        </div>
+      </section>
+
+      <section id="patterns">
+        <div class="sec-head"><span class="num">10</span>
+          <h2 style="margin:0">常見場景配置<a href="#patterns" class="anchor-link">#</a></h2>
+        </div>
+        <p class="section-lead">以下整理範例中常見的配置方式。遇到相同情境時，可先採用相近結構，再依目標站台調整 selector、regex、header 與編碼。</p>
+
+        <div class="grid step-grid patterns-grid">
+          <div class="card step-card" data-step="1">
+            <h3>Cloudflare / WebView 驗證</h3>
+            <p>頁面需要瀏覽器環境或挑戰驗證時，在 request config 改用 WebView。<br>response config
+              只放用來判斷挑戰與驗證完成的關鍵字。<br><code>shouldReload</code> 視站台驗證後是否需要重新載入頁面而定，不是固定必填。</p>
+            <div class="code-block"><button class="copy-btn">複製</button>
+              <pre><code>// request.config
+{
+  "requestMethodRawValue": 1,
+  "websiteDataStoreRawValue": 1
+}
+
+// response.config
+{
+  "charEncodingRawValue": 2,
+  "challengeKeywords": ["challenge"],
+  "challengeVerifiedKeywords": ["cf_clearance"],
+  "challengeCookieDomains": [".example.com"],
+  "authStorageTypeRawValue": 0,
+  "waitForCookie": true
+}</code></pre>
+            </div>
+          </div>
+
+          <div class="card step-card" data-step="2">
+            <h3>AJAX 章節列表（JSON API）</h3>
+            <p>詳細頁可從 meta 或 DOM 取 book id，用 <code>prefix</code> / <code>suffix</code> 拼出章節 API。回 JSON 時用
+              <code>isJSONFormat</code>+<code>jsonKey</code>+<code>orderedKeys</code>，後續仍用 CSS selector 解析。
+            </p>
+            <div class="code-block"><button class="copy-btn">複製</button>
+              <pre><code>{
+  "listElement": {
+    "isJSONFormat": true,
+    "jsonKey": "data",
+    "orderedKeys": ["id", "title"],
+    "cssSelector": "#json-content > ul > li"
+  },
+  "pathElement": {
+    "cssSelector": "ul > li:nth-of-type(1)",
+    "actionValue": 0,
+    "prefix": "/book/40459/",
+    "suffix": ".html"
+  },
+  "nameElement": { "cssSelector": "ul > li:nth-of-type(2)", "actionValue": 0 }
+}</code></pre>
+            </div>
+          </div>
+
+          <div class="card step-card" data-step="3">
+            <h3>pTag 正文清理</h3>
+            <p><code>actionValue: 22</code> 適合段落以 <code>&lt;p&gt;</code> 呈現的頁面。先 <code>removeElements</code>
+              移除標題、廣告、script，再用 <code>invalidTags</code> + <code>replaceTags</code> 控制輸出。</p>
+            <div class="code-block"><button class="copy-btn">複製</button>
+              <pre><code>{
+  "contentElement": {
+    "cssSelector": "div.txtnav",
+    "actionValue": 22,
+    "separator": "\n",
+    "removeElements": ["script", "style", ".bottem", ".ad"],
+    "invalidTags":   ["&lt;h", "&lt;script", "&lt;/script", "⊥"],
+    "replaceTags":   ["&lt;p&gt;", "&lt;/p&gt;", "&lt;br&gt;", "&lt;br /&gt;"]
+  }
+}</code></pre>
+            </div>
+          </div>
+
+          <div class="card step-card" data-step="4">
+            <h3>brTag 正文（傳統小說頁）</h3>
+            <p>頁面用 <code>&lt;br&gt;</code> 換行時用 <code>actionValue: 19</code>。記得移除站台廣告與固定提示文字。</p>
+            <div class="code-block"><button class="copy-btn">複製</button>
+              <pre><code>{
+  "contentElement": {
+    "cssSelector": "#content",
+    "actionValue": 19,
+    "separator": "\n",
+    "removeElements": ["script", ".adsbygoogle"],
+    "blankReplacements": {
+      "0": ["請記住本站永久域名", "天才一秒記住"]
+    }
+  }
+}</code></pre>
+            </div>
+          </div>
+
+          <div class="card step-card" data-step="5">
+            <h3>路徑正規化 + 章節接書路徑</h3>
+            <p>解析結果若包含站台 host，可用 <code>hostsToReplace</code> 移除指定 host 字串，輸出一致的 path 格式。<br>正文若回相對檔名（如
+              <code>2.html</code>），用 <code>shouldReplaceBookPath</code> + <code>bookPathReplacements</code> 接回。
+            </p>
+            <div class="code-block"><button class="copy-btn">複製</button>
+              <pre><code>{
+  "hostsToReplace": [
+    "https://www.example.com",
+    "http://www.example.com",
+    "https://example.com"
+  ],
+  "content": {
+    "chapterPathRegex": "^/book/\\d+/\\d+\\.html$",
+    "shouldReplaceBookPath": true,
+    "bookPathReplacements": { "/": [".html"] }
+  }
+}</code></pre>
+            </div>
+          </div>
+
+          <div class="card step-card" data-step="6">
+            <h3>多分類標籤（actionValue: 2）</h3>
+            <p>多個 label 元素合併成一個字串，並可只取特定索引（如第一個分類）。</p>
+            <div class="code-block"><button class="copy-btn">複製</button>
+              <pre><code>{
+  "authorElement": {
+    "actionValue": 2,
+    "cssSelector": ".labelbox label",
+    "collectionSeparator": ", ",
+    "collectionActionValue": 0,
+    "collectionValueIndexes": [0]
+  }
+}</code></pre>
+            </div>
+          </div>
+
+          <div class="card step-card" data-step="7">
+            <h3>JS 動態簽名（搜尋加密）</h3>
+            <p>搜尋需 JS 加密簽名時，注入 <code>source</code> 函式並用 <code>invoke</code> 呼叫，結果以 <code>key</code>
+              為鍵存入查詢字典。<code>keywords</code> 是系統自動帶入的關鍵字。</p>
+            <div class="code-block"><button class="copy-btn">複製</button>
+              <pre><code>{
+  "jsScripts": [{
+    "key": "sig",
+    "source": "function encode(s){ return btoa(unescape(encodeURIComponent(s))); }",
+    "invoke": "encode(keywords)"
+  }]
+}</code></pre>
+            </div>
+          </div>
+
+          <div class="card step-card" data-step="8">
+            <h3>分類無分頁 / 條件忽略分頁</h3>
+            <p>分類沒分頁時忽略索引；只在含特定關鍵字（如 <code>author</code>）時才忽略。</p>
+            <div class="code-block"><button class="copy-btn">複製</button>
+              <pre><code>{
+  "shouldIgnorePageIndex": true,
+  "ignorePageIndexByKeywords": ["author", "tag"]
+}</code></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="downloads">
+        <div class="sec-head"><span class="num">11</span>
+          <h2 style="margin:0">範例書源與 Agent 文檔<a href="#downloads" class="anchor-link">#</a></h2>
+        </div>
+        <p class="section-lead">此區列出 18 份完整書源範例與 1 份 AI Agent 技能文檔。新增書源時，建議先找一份與目標站台結構接近的範例，對照其
+          request、response、selector 與 regex 設定。範例檔案位於 <code>examples/</code>。</p>
+
+        <div class="download-toolbar">
+          <input id="dlFilter" type="search" placeholder="搜尋範例或文檔名稱…" autocomplete="off" spellcheck="false">
+          <span class="download-count" id="dlCount">18 個檔案</span>
+        </div>
+
+        <p class="section-lead" style="margin:-6px 0 14px; font-size:14px">點擊任一張卡片可預覽內容，並在預覽視窗內複製或下載。</p>
+
+        <div class="download-grid" id="downloadGrid">
+          <button class="dl-card" data-file="SKILL.md" data-display="AI Agent Skill" data-name="SKILL AI Agent 技能文檔">
+            <span class="dl-icon">MD</span>
+            <span class="dl-meta"><b>AI Agent Skill</b><span>SKILL.md</span></span>
+            <span class="dl-action">預覽</span>
+          </button>
+          <button class="dl-card" data-file="examples/52書庫.json" data-display="52書庫" data-name="52書庫">
+            <span class="dl-icon">JSON</span>
+            <span class="dl-meta"><b>52書庫</b><span>9.0 KB</span></span>
+            <span class="dl-action">預覽</span>
+          </button>
+          <button class="dl-card" data-file="examples/TW看書網.json" data-display="TW 看書網" data-name="TW看書網 TW">
+            <span class="dl-icon">JSON</span>
+            <span class="dl-meta"><b>TW 看書網</b><span>9.1 KB</span></span>
+            <span class="dl-action">預覽</span>
+          </button>
+          <button class="dl-card" data-file="examples/uukan.json" data-display="uukan" data-name="uukan">
+            <span class="dl-icon">JSON</span>
+            <span class="dl-meta"><b>uukan</b><span>7.9 KB</span></span>
+            <span class="dl-action">預覽</span>
+          </button>
+          <button class="dl-card" data-file="examples/uuread.json" data-display="uuread" data-name="uuread">
+            <span class="dl-icon">JSON</span>
+            <span class="dl-meta"><b>uuread</b><span>7.5 KB</span></span>
+            <span class="dl-action">預覽</span>
+          </button>
+          <button class="dl-card" data-file="examples/zhaoshuyuan.json" data-display="zhaoshuyuan"
+            data-name="zhaoshuyuan">
+            <span class="dl-icon">JSON</span>
+            <span class="dl-meta"><b>zhaoshuyuan</b><span>9.4 KB</span></span>
+            <span class="dl-action">預覽</span>
+          </button>
+          <button class="dl-card" data-file="examples/全本小說.json" data-display="全本小說" data-name="全本小說">
+            <span class="dl-icon">JSON</span>
+            <span class="dl-meta"><b>全本小說</b><span>7.3 KB</span></span>
+            <span class="dl-action">預覽</span>
+          </button>
+          <button class="dl-card" data-file="examples/吞噬小说.json" data-display="吞噬小說" data-name="吞噬小说 吞噬小說">
+            <span class="dl-icon">JSON</span>
+            <span class="dl-meta"><b>吞噬小說</b><span>8.0 KB</span></span>
+            <span class="dl-action">預覽</span>
+          </button>
+          <button class="dl-card" data-file="examples/宙斯小說網.json" data-display="宙斯小說網" data-name="宙斯小說網">
+            <span class="dl-icon">JSON</span>
+            <span class="dl-meta"><b>宙斯小說網</b><span>8.5 KB</span></span>
+            <span class="dl-action">預覽</span>
+          </button>
+          <button class="dl-card" data-file="examples/思兔閱讀.json" data-display="思兔閱讀" data-name="思兔閱讀">
+            <span class="dl-icon">JSON</span>
+            <span class="dl-meta"><b>思兔閱讀</b><span>9.0 KB</span></span>
+            <span class="dl-action">預覽</span>
+          </button>
+          <button class="dl-card" data-file="examples/明智屋小說.json" data-display="明智屋小說" data-name="明智屋小說">
+            <span class="dl-icon">JSON</span>
+            <span class="dl-meta"><b>明智屋小說</b><span>8.3 KB</span></span>
+            <span class="dl-action">預覽</span>
+          </button>
+          <button class="dl-card" data-file="examples/無限小說.json" data-display="無限小說" data-name="無限小說">
+            <span class="dl-icon">JSON</span>
+            <span class="dl-meta"><b>無限小說</b><span>7.3 KB</span></span>
+            <span class="dl-action">預覽</span>
+          </button>
+          <button class="dl-card" data-file="examples/爱下电子书.json" data-display="愛下電子書" data-name="爱下电子书 愛下電子書">
+            <span class="dl-icon">JSON</span>
+            <span class="dl-meta"><b>愛下電子書</b><span>8.4 KB</span></span>
+            <span class="dl-action">預覽</span>
+          </button>
+          <button class="dl-card" data-file="examples/繁體小說網.json" data-display="繁體小說網" data-name="繁體小說網">
+            <span class="dl-icon">JSON</span>
+            <span class="dl-meta"><b>繁體小說網</b><span>7.8 KB</span></span>
+            <span class="dl-action">預覽</span>
+          </button>
+          <button class="dl-card" data-file="examples/话本小说.json" data-display="話本小說" data-name="话本小说 話本小說">
+            <span class="dl-icon">JSON</span>
+            <span class="dl-meta"><b>話本小說</b><span>8.4 KB</span></span>
+            <span class="dl-action">預覽</span>
+          </button>
+          <button class="dl-card" data-file="examples/速读谷.json" data-display="速讀谷" data-name="速读谷 速讀谷">
+            <span class="dl-icon">JSON</span>
+            <span class="dl-meta"><b>速讀谷</b><span>8.3 KB</span></span>
+            <span class="dl-action">預覽</span>
+          </button>
+          <button class="dl-card" data-file="examples/飘天文学.json" data-display="飄天文學" data-name="飘天文学 飄天文學">
+            <span class="dl-icon">JSON</span>
+            <span class="dl-meta"><b>飄天文學</b><span>9.4 KB</span></span>
+            <span class="dl-action">預覽</span>
+          </button>
+          <button class="dl-card" data-file="examples/飛翔鳥中文.json" data-display="飛翔鳥中文" data-name="飛翔鳥中文">
+            <span class="dl-icon">JSON</span>
+            <span class="dl-meta"><b>飛翔鳥中文</b><span>8.1 KB</span></span>
+            <span class="dl-action">預覽</span>
+          </button>
+          <button class="dl-card" data-file="examples/黃金屋中文.json" data-display="黃金屋中文" data-name="黃金屋中文">
+            <span class="dl-icon">JSON</span>
+            <span class="dl-meta"><b>黃金屋中文</b><span>7.7 KB</span></span>
+            <span class="dl-action">預覽</span>
+          </button>
+        </div>
+
+        <div class="callout tip" style="margin-top:14px">
+          <span class="icon">i</span>
+          <div>
+            <strong>範例選用建議</strong>
+            GBK 站台可參考 <code>52書庫</code>、<code>全本小說</code>；WebView 可參考 <code>思兔閱讀</code>；AJAX 章節列表可參考
+            <code>吞噬小说</code>；POST 搜尋可參考 <code>zhaoshuyuan</code>；分頁目錄可參考 <code>明智屋小說</code>。
+          </div>
+        </div>
+      </section>
+
+      <section id="template">
+        <div class="sec-head"><span class="num">12</span>
+          <h2 style="margin:0">最小可用模板<a href="#template" class="anchor-link">#</a></h2>
+        </div>
+        <p class="section-lead">下方保留必要骨架。建立新書源時，可先替換基本資訊，再依站台補上 selector、regex、編碼、header 與分頁設定。</p>
+        <div class="code-block with-label">
+          <span class="code-label">examples/新書源.json</span>
+          <button class="copy-btn">複製</button>
+          <pre><code>{
+  "info": {
+    "type": 99,
+    "name": "書源名稱",
+    "alias": "書源名稱",
+    "index": 1105,
+    "version": 1,
+    "enabled": true,
+    "sortIndex": 1105,
+    "allowSearch": true,
+    "allowDownload": true
+  },
+  "data": {
+    "searchIndex": 1105,
+    "request": {
+      "home":     { "main": { "settings": {}, "config": {} }, "inPage": true },
+      "detail":   { "main": { "settings": {}, "config": {} }, "inPage": false },
+      "chapter":  { "main": { "settings": {}, "config": {} }, "isPartial": false },
+      "content":  { "settings": {}, "config": {} },
+      "category": { "main": { "settings": {}, "config": {} } },
+      "search":   { "settings": {}, "config": {} }
+    },
+    "response": {
+      "config": { "charEncodingRawValue": 2 },
+      "hostsToReplace": ["https://example.com"],
+      "imageHost": "https://example.com",
+      "home":     {},
+      "detail":   {},
+      "chapter":  {},
+      "content":  {},
+      "category": {},
+      "search":   {}
+    }
+  }
+}</code></pre>
+        </div>
+      </section>
+
+      <section id="faq">
+        <div class="sec-head"><span class="num">13</span>
+          <h2 style="margin:0">疑難排解<a href="#faq" class="anchor-link">#</a></h2>
+        </div>
+        <p class="section-lead">依常見症狀整理可能原因與處理方式。遇到解析或請求異常時，先從對應條目檢查。</p>
+
+        <details class="faq" open>
+          <summary>列表全部解析成同一筆，或只有第一筆</summary>
+          <div class="faq-body">通常是 <code>listElement</code> 沒指到「重複項目」，而是指到整個容器。<br>檢查 selector 是否落在每筆共用的父節點上，例如
+            <code>.book-list li</code>，不要只選 <code>.book-list</code>。
+            <div class="code-block"><button class="copy-btn">複製</button>
+              <pre><code>{
+  "listElement": { "cssSelector": ".book-list li" },
+  "nameElement": { "cssSelector": "a", "actionValue": 0 },
+  "pathElement": { "cssSelector": "a", "actionValue": 10, "attributeKey": "href" }
+}</code></pre>
+            </div>
+          </div>
+        </details>
+
+        <details class="faq">
+          <summary>正文混入廣告、站台提示或 script</summary>
+          <div class="faq-body">先用 <code>removeElements</code> 移除子元素，再用 <code>blankReplacements</code> 清理固定字串。<br>使用
+            <code>actionValue: 22</code> 時，可搭配 <code>invalidTags</code> 與 <code>replaceTags</code> 統一段落格式。
+            <div class="code-block"><button class="copy-btn">複製</button>
+              <pre><code>{
+  "contentElement": {
+    "cssSelector": "#content",
+    "actionValue": 22,
+    "separator": "\n",
+    "removeElements": ["script", "style", ".ad"],
+    "blankReplacements": {
+      "1": ["請記住本站.*", "本章未完.*"]
+    },
+    "invalidTags": ["&lt;script", "&lt;style"],
+    "replaceTags": ["&lt;p&gt;", "&lt;/p&gt;", "&lt;br&gt;", "&lt;br /&gt;"]
+  }
+}</code></pre>
+            </div>
+          </div>
+        </details>
+
+        <details class="faq">
+          <summary>章節目錄需要分頁載入</summary>
+          <div class="faq-body">若章節目錄分散在多個頁面，需在 request 加分頁參數，並在 response 加 <code>pageCountElement</code> 或固定
+            <code>pageCount</code>。<br>若 API 回傳 JSON，可先包裝成可用 CSS selector 解析的結構。
+            <div class="code-block"><button class="copy-btn">複製</button>
+              <pre><code>{
+  "request": {
+    "chapter": {
+      "main": {
+        "settings": {
+          "apiHost": "https://example.com",
+          "apiPath": "/book/123/",
+          "apiPageIndexPrefix": "page_",
+          "apiPathSuffix": ".html",
+          "httpMethod": "GET"
+        },
+        "config": { "charEncodingRawValue": 2 }
+      },
+      "isPartial": true
+    }
+  },
+  "response": {
+    "chapter": {
+      "pageCount": 5,
+      "listElement": { "cssSelector": ".chapter-list a" },
+      "nameElement": { "cssSelector": "self", "actionValue": 0 },
+      "pathElement": {
+        "cssSelector": "self",
+        "actionValue": 10,
+        "attributeKey": "href"
+      }
+    }
+  }
+}</code></pre>
+            </div>
+          </div>
+        </details>
+
+        <details class="faq">
+          <summary>Cloudflare 驗證後仍無法取得內容</summary>
+          <div class="faq-body">先確認該頁是否真的需要 WebView。<br>需要時，request 使用
+            <code>requestMethodRawValue: 1</code>。<br>response config 放挑戰判斷與驗證完成關鍵字；<code>shouldReload</code>
+            只在驗證完成後需要重新載入頁面時才設定。
+            <div class="code-block"><button class="copy-btn">複製</button>
+              <pre><code>{
+  "request": {
+    "detail": {
+      "main": {
+        "config": {
+          "requestMethodRawValue": 1,
+          "websiteDataStoreRawValue": 1
+        }
+      }
+    }
+  },
+  "response": {
+    "config": {
+      "challengeKeywords": ["challenges.cloudflare", "Just a moment"],
+      "challengeVerifiedKeywords": ["cf_clearance"],
+      "challengeCookieDomains": [".example.com"],
+      "authStorageTypeRawValue": 0,
+      "waitForCookie": true
+    }
+  }
+}</code></pre>
+            </div>
+          </div>
+        </details>
+
+        <details class="faq">
+          <summary>搜尋自動跳轉到單本詳細頁，結果空白</summary>
+          <div class="faq-body">補上 s-* 系列欄位，再用 search 根節點 <code>cssSelector</code> 指定該筆容器，讓後續解析與多筆流程一致。
+            <div class="code-block"><button class="copy-btn">複製</button>
+              <pre><code>{
+  "search": {
+    "cssSelector": "div.book",
+    "sNameElement": { "cssSelector": "h1", "actionValue": 0 },
+    "sPathElement": {
+      "cssSelector": "link[rel=canonical]",
+      "actionValue": 10,
+      "attributeKey": "href"
+    }
+  }
+}</code></pre>
+            </div>
+          </div>
+        </details>
+
+        <details class="faq">
+          <summary>章節順序顛倒（最新章節在最前面）</summary>
+          <div class="faq-body">完整章節目錄順序顛倒時，在 <code>response.chapter</code> 設
+            <code>reversed: true</code>。<br><code>partialReversed</code> 只用於分頁章節目錄，表示每一頁內的章節也需要反轉。<br>若要依章節路徑或章節名稱排序，再搭配
+            <code>sortTypeRawValue</code>。
+            <div class="code-block"><button class="copy-btn">複製</button>
+              <pre><code>{
+  "chapter": {
+    "reversed": true,
+    "sortTypeRawValue": 1
+  }
+}</code></pre>
+            </div>
+          </div>
+        </details>
+
+        <details class="faq">
+          <summary>HTML 結構不完整 / 只有關閉標籤</summary>
+          <div class="faq-body">於對應 ParseElement 設 <code>shouldNormalise: true</code>，系統會先補齊再解析。<br>若資料是非標準字串，改用
+            <code>actionValue: 20</code> + <code>parseableItems</code> 裁切。
+            <div class="code-block"><button class="copy-btn">複製</button>
+              <pre><code>{
+  "nameElement": {
+    "cssSelector": "script",
+    "actionValue": 20,
+    "parseableItems": [
+      { "value": "bookName: '", "direction": 2 },
+      { "value": "'", "direction": 1 }
+    ]
+  }
+}</code></pre>
+            </div>
+          </div>
+        </details>
+
+        <details class="faq">
+          <summary>分類第一頁與第二頁 URL 不同</summary>
+          <div class="faq-body">request 用 <code>apiPathReplacements</code> 把第一頁特殊段轉成第二頁起的模式，再讓系統套上
+            <code>apiPageIndexPrefix</code> + 索引。<br>若需要等完整 URL 組合後再改，使用 <code>finalURLReplacements</code>。
+            <div class="code-block"><button class="copy-btn">複製</button>
+              <pre><code>{
+  "settings": {
+    "apiPathReplacements": {
+      "_1.html": ""
+    },
+    "apiPageIndexPrefix": "_",
+    "apiPathSuffix": ".html",
+    "finalURLReplacements": {
+      "/index.html": "/"
+    }
+  }
+}</code></pre>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <section id="checklist">
+        <div class="sec-head"><span class="num">14</span>
+          <h2 style="margin:0">驗收清單<a href="#checklist" class="anchor-link">#</a></h2>
+        </div>
+        <p class="section-lead">完成規則後，逐項確認結構、路徑與解析結果。<br>先實測詳細、章節與正文；首頁、分類與搜尋依來源支援情況測試。</p>
+        <div class="grid">
+          <div class="band">
+            <h3>規則完整性</h3>
+            <ul class="checklist">
+              <li><span><code>info.index</code> 與既有書源不衝突（建議 1000+）</span></li>
+              <li><span>已覆蓋來源支援的功能區塊；不支援分類或搜尋時可省略</span></li>
+              <li><span><code>hostsToReplace</code>、<code>pathRegex</code>、<code>chapterPathRegex</code> 對齊最終路徑格式</span>
+              </li>
+              <li><span>若支援分類或搜尋，需實測分類分頁與搜尋多筆結果</span></li>
+              <li><span>JSON 結構合法，可被 App 正常匯入</span></li>
+            </ul>
+          </div>
+          <div class="band">
+            <h3>解析品質</h3>
+            <ul class="checklist">
+              <li><span><code>listElement</code> 直接指向重複項目，避免整個容器解析成單筆</span></li>
+              <li><span>正文已移除廣告、script、導覽按鈕與站台提示文字</span></li>
+              <li><span>若支援搜尋，需處理多筆結果；若站台會單筆跳轉，再補 s-* 欄位</span></li>
+              <li><span>Cloudflare / AJAX / GBK / 動態參數，request 與 response 對齊</span></li>
+              <li><span>封面 URL 完整可載入（必要時加 <code>imageHost</code>）</span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="card" style="margin-top:14px">
+          <h3>實測順序建議</h3>
+          <ol style="margin:0; padding-left:20px; color:var(--muted); font-size:14px; line-height:1.8">
+            <li>把書源 JSON 匯入 App，確認列表可見且能進入</li>
+            <li>若有首頁推薦，確認列表可正常載入與點擊</li>
+            <li>若有分類列表，至少測試第二頁或下一頁載入</li>
+            <li>若有搜尋，測試多筆關鍵字；若站台會單筆跳轉，再測 s-* 欄位</li>
+            <li>進入章節目錄、開啟正文，驗證上一章 / 下一章按鈕</li>
+            <li>進入正文頁查看內容是否完整</li>
+          </ol>
+        </div>
+      </section>
+
+      <footer>
+        快捷鍵：<kbd>/</kbd> 聚焦搜尋 · <kbd>Esc</kbd> 清除過濾 · <kbd>T</kbd> 切換深色 / 淺色
+      </footer>
+    </main>
+  </div>
+
+  <!-- Preview modal -->
+  <div class="modal-backdrop" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" hidden>
+    <div class="modal">
+      <header class="modal-head">
+        <div class="icon" id="modalIcon">JSON</div>
+        <div class="title-stack">
+          <b id="modalTitle">範例預覽</b>
+          <span id="modalPath" data-lang-skip>examples/example.json</span>
+        </div>
+        <div class="actions">
+          <button class="btn" id="modalCopy" type="button">複製</button>
+          <a class="btn primary" id="modalDownload" download href="#">下載</a>
+        </div>
+        <button class="modal-close" id="modalClose" type="button" aria-label="關閉">×</button>
+      </header>
+      <div class="modal-body" id="modalBody">
+        <div class="loading">載入中…</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      // ===== JSON highlight + pretty print =====
+      // Tokenizer that handles JSON-with-comments (//) and tolerates the few
+      // examples that use trailing commas / template placeholders. Falls back
+      // to raw text if anything goes wrong.
+      function highlightJSON(raw) {
+        const SENT = ''; // private-use marker
+        const out = [];
+        let i = 0, len = raw.length;
+        const isWS = c => c === ' ' || c === '\t' || c === '\n' || c === '\r';
+        while (i < len) {
+          const c = raw[i];
+          if (c === '"') {
+            let j = i + 1;
+            while (j < len) {
+              if (raw[j] === '\\') { j += 2; continue; }
+              if (raw[j] === '"') break;
+              j++;
+            }
+            const str = raw.slice(i, j + 1);
+            let k = j + 1;
+            while (k < len && isWS(raw[k])) k++;
+            const isKey = raw[k] === ':';
+            out.push({ t: isKey ? 'k' : 's', v: str });
+            i = j + 1;
+          } else if (c === '/' && raw[i + 1] === '/') {
+            let j = i;
+            while (j < len && raw[j] !== '\n') j++;
+            out.push({ t: 'c', v: raw.slice(i, j) });
+            i = j;
+          } else if (c === '-' || (c >= '0' && c <= '9')) {
+            const prev = i > 0 ? raw[i - 1] : ' ';
+            if (isWS(prev) || prev === ':' || prev === ',' || prev === '[' || prev === '(') {
+              let j = i;
+              if (raw[j] === '-') j++;
+              while (j < len && /[0-9.eE+\-]/.test(raw[j])) j++;
+              out.push({ t: 'n', v: raw.slice(i, j) });
+              i = j; continue;
+            }
+            out.push({ t: 'p', v: c });
+            i++;
+          } else if ((c === 't' && raw.slice(i, i + 4) === 'true') ||
+            (c === 'f' && raw.slice(i, i + 5) === 'false') ||
+            (c === 'n' && raw.slice(i, i + 4) === 'null')) {
+            const word = c === 'f' ? 'false' : (c === 't' ? 'true' : 'null');
+            out.push({ t: 'b', v: word });
+            i += word.length;
+          } else {
+            out.push({ t: 'p', v: c });
+            i++;
+          }
+        }
+        const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return out.map(tok => {
+          if (tok.t === 'p') return esc(tok.v);
+          return '<span class="tok-' + tok.t + '">' + esc(tok.v) + '</span>';
+        }).join('');
+      }
+
+      // Try to pretty-print; if the text isn't strict JSON (e.g. uses // comments
+      // or trailing commas), return original.
+      function prettyPrintJSON(raw) {
+        const trimmed = raw.trim();
+        if (!trimmed) return raw;
+        const first = trimmed[0];
+        if (first !== '{' && first !== '[') return raw;
+        try {
+          return JSON.stringify(JSON.parse(trimmed), null, 2);
+        } catch (e) {
+          return raw;
+        }
+      }
+
+      function looksLikeJSON(text) {
+        // Strip any leading // comments + whitespace so blocks that start with
+        // `// request.config\n{ ... }` are still recognised as JSON.
+        let t = text.trim();
+        while (t.startsWith('//')) {
+          const nl = t.indexOf('\n');
+          if (nl === -1) return false;
+          t = t.slice(nl + 1).trimStart();
+        }
+        const f = t[0];
+        return f === '{' || f === '[';
+      }
+
+      function applyHighlight(codeEl, { tryPretty = true } = {}) {
+        const raw = codeEl.textContent;
+        if (!looksLikeJSON(raw)) return;
+        const text = tryPretty ? prettyPrintJSON(raw) : raw;
+        codeEl.innerHTML = highlightJSON(text);
+      }
+
+      // Highlight all inline JSON code blocks (skip bash / explicit labels).
+      document.querySelectorAll('.code-block').forEach(block => {
+        const label = block.querySelector('.code-label');
+        if (label && /bash|shell|sh/i.test(label.textContent)) return;
+        const code = block.querySelector('pre code');
+        if (code) applyHighlight(code);
+      });
+
+      // ===== Type colors =====
+      // Map JSON type label → CSS class for color coding.
+      function typeClass(raw) {
+        const t = (raw || '').trim();
+        if (!t) return '';
+        if (t === 'String') return 't-str';
+        if (t === 'Int' || t === 'Double' || t === 'Number') return 't-num';
+        if (t === 'Bool' || t === 'Boolean') return 't-bool';
+        if (t === 'Map' || /^Map\b/.test(t)) return 't-map';
+        if (t.startsWith('[') && t.endsWith(']')) return 't-arr';
+        // Everything else (Object, ParseElement, ParseElements, JSScript, Item, …)
+        return 't-obj';
+      }
+
+      // Apply to spec-list type chips
+      document.querySelectorAll('.spec-list .t').forEach(el => {
+        const cls = typeClass(el.textContent);
+        if (cls) el.classList.add(cls);
+      });
+
+      // Apply to table type cells (2nd column of any spec table)
+      document.querySelectorAll('table').forEach(tbl => {
+        // Determine which column is type by checking headers
+        const headers = Array.from(tbl.querySelectorAll('thead th')).map(t => t.textContent.trim());
+        const typeCol = headers.indexOf('型別');
+        if (typeCol === -1) return;
+        tbl.querySelectorAll('tbody tr').forEach(tr => {
+          const cell = tr.children[typeCol];
+          if (!cell || cell.querySelector('.type-chip')) return;
+          const raw = cell.textContent.trim();
+          if (!raw) return;
+          const cls = typeClass(raw);
+          cell.innerHTML = `<span class="type-chip ${cls}">${raw}</span>`;
+        });
+      });
+
+      // ===== Theme toggle =====
+      // Priority: user choice (localStorage) > system preference > light default
+      const themeBtn = document.getElementById('themeToggle');
+      const themeIcon = document.getElementById('themeIcon');
+      const themeLabel = document.getElementById('themeLabel');
+      const root = document.documentElement;
+      const mql = window.matchMedia('(prefers-color-scheme: dark)');
+
+      const applyTheme = (mode) => {
+        root.setAttribute('data-theme', mode);
+        if (mode === 'dark') {
+          themeIcon.textContent = '☀';
+          themeLabel.textContent = '淺色';
+          themeBtn.setAttribute('aria-pressed', 'true');
+        } else {
+          themeIcon.textContent = '☾';
+          themeLabel.textContent = '深色';
+          themeBtn.setAttribute('aria-pressed', 'false');
+        }
+      };
+
+      const stored = localStorage.getItem('bs-theme');
+      if (stored === 'dark' || stored === 'light') {
+        applyTheme(stored);
+      } else {
+        applyTheme(mql.matches ? 'dark' : 'light');
+      }
+
+      const updateTopbarHeight = () => {
+        const topbar = document.querySelector('.topbar');
+        if (!topbar) return;
+        root.style.setProperty('--topbar-height', topbar.offsetHeight + 'px');
+      };
+      updateTopbarHeight();
+      window.addEventListener('resize', updateTopbarHeight, { passive: true });
+
+      // Follow system preference when user hasn't made a choice
+      mql.addEventListener('change', e => {
+        if (!localStorage.getItem('bs-theme')) applyTheme(e.matches ? 'dark' : 'light');
+        updateTopbarHeight();
+      });
+
+      themeBtn.addEventListener('click', () => {
+        const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        applyTheme(next);
+        localStorage.setItem('bs-theme', next);
+        updateTopbarHeight();
+      });
+
+      // ===== Language toggle =====
+      const languageBtn = document.getElementById('languageToggle');
+      const languageLabel = document.getElementById('languageLabel');
+      let currentLanguage = localStorage.getItem('bs-lang') === 'hans' ? 'hans' : 'hant';
+      const phraseMap = [
+        ['文件', '文档'],
+        ['書源', '书源'], ['規則', '规则'], ['對接', '对接'],
+        ['結構總覽', '结构总览'], ['快速開始', '快速开始'], ['流程一覽', '流程一览'],
+        ['請求規則', '请求规则'], ['解析規則', '解析规则'], ['欄位', '字段'],
+        ['對照', '对照'], ['功能區塊', '功能区块'], ['參考資料', '参考资料'],
+        ['常見場景配置', '常见场景配置'], ['範例書源', '范例书源'], ['範例', '范例'],
+        ['最小可用模板', '最小可用模板'], ['疑難排解', '疑难排解'], ['驗收清單', '验收清单'],
+        ['搜尋', '搜索'], ['顯示', '显示'], ['清除', '清除'], ['深色', '深色'],
+        ['淺色', '浅色'], ['繁體中文', '繁体中文'], ['簡體中文', '简体中文'],
+        ['切換', '切换'], ['已複製', '已复制'], ['複製失敗', '复制失败'], ['複製', '复制'], ['下載', '下载'], ['全選', '全选'],
+        ['關閉', '关闭'], ['載入中', '加载中'], ['無法載入檔案', '无法加载文件'],
+        ['錯誤', '错误'], ['符合', '符合'], ['個檔案', '个文件'], ['項目', '项目'],
+        ['書籍', '书籍'], ['章節', '章节'], ['正文', '正文'], ['分類', '分类'],
+        ['詳情', '详情'], ['路徑', '路径'], ['設定', '设置'], ['匯入', '导入'],
+        ['檢查', '检查'], ['建立', '建立'], ['支援', '支持'], ['完整', '完整'],
+        ['檔案', '文件'], ['類型', '类型'], ['資訊', '信息'],
+        ['資料', '资料'], ['頁面', '页面'], ['導覽', '导航'], ['預覽', '预览'],
+        ['內容', '内容'], ['說明', '说明'], ['開啟', '打开'], ['關鍵字', '关键字'],
+        ['區塊', '区块'], ['資源', '资源'], ['標籤', '标签'], ['語系', '语系'],
+        ['繁體', '繁体'], ['簡體', '简体']
+      ];
+      const tradChars = '書規則對開發單頁檔與範覽總欄區塊請類場設說訊載點擊預複製選擇態線關鍵詞應從這裡資實測順議號項個體簡構層結驗證讀取匯啟閉稱義調薦導時據庫觸殘餘廣內詳徑標籤語錯誤顯淺';
+      const simpChars = '书规则对开发单页档与范览总栏区块请类场设说讯载点击预复制选择态线关键词应从这里资实测顺议号项个体简构层结验证读取汇启闭称义调荐导时据库触残余广内详径标签语错误显浅';
+      const charMap = new Map(Array.from(tradChars).map((ch, i) => [ch, simpChars[i] || ch]));
+      const originalText = new WeakMap();
+      const skipLang = el => el && el.closest && el.closest('script, style, pre, code, kbd, [data-lang-skip]');
+      const toHans = text => {
+        let out = text;
+        phraseMap.forEach(([hant, hans]) => { out = out.split(hant).join(hans); });
+        return Array.from(out).map(ch => charMap.get(ch) || ch).join('');
+      };
+      const toLanguage = text => currentLanguage === 'hans' ? toHans(text) : text;
+      const applyLanguage = (scope = document.body) => {
+        const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT, {
+          acceptNode(node) {
+            if (!node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+            if (skipLang(node.parentElement)) return NodeFilter.FILTER_REJECT;
+            return NodeFilter.FILTER_ACCEPT;
+          }
+        });
+        const textNodes = [];
+        while (walker.nextNode()) textNodes.push(walker.currentNode);
+        textNodes.forEach(node => {
+          const rawText = node.parentElement?.dataset.rawText;
+          if (!rawText && !originalText.has(node)) originalText.set(node, node.nodeValue);
+          node.nodeValue = toLanguage(rawText || originalText.get(node));
+        });
+        scope.querySelectorAll?.('[placeholder], [title], [aria-label]').forEach(el => {
+          ['placeholder', 'title', 'aria-label'].forEach(attr => {
+            if (!el.hasAttribute(attr)) return;
+            const key = 'hant' + attr.replace(/(^|-)([a-z])/g, (_, __, c) => c.toUpperCase());
+            if (!el.dataset[key]) el.dataset[key] = el.getAttribute(attr);
+            el.setAttribute(attr, toLanguage(el.dataset[key]));
+          });
+        });
+        root.setAttribute('lang', currentLanguage === 'hans' ? 'zh-Hans' : 'zh-Hant');
+        languageLabel.textContent = currentLanguage === 'hans' ? '繁體' : '简体';
+        languageBtn.setAttribute('aria-pressed', String(currentLanguage === 'hans'));
+      };
+      languageBtn.addEventListener('click', () => {
+        currentLanguage = currentLanguage === 'hans' ? 'hant' : 'hans';
+        localStorage.setItem('bs-lang', currentLanguage);
+        applyLanguage();
+      });
+      applyLanguage();
+
+      // ===== Mobile navigation =====
+      const navToggle = document.getElementById('navToggle');
+      const navOverlay = document.getElementById('navOverlay');
+      const setNavOpen = (open) => {
+        document.body.classList.toggle('nav-open', open);
+        navToggle?.setAttribute('aria-expanded', String(open));
+        navToggle?.setAttribute('aria-label', open ? '關閉導覽' : '開啟導覽');
+        if (navOverlay) navOverlay.hidden = !open;
+      };
+      navToggle?.addEventListener('click', () => {
+        setNavOpen(!document.body.classList.contains('nav-open'));
+      });
+      navOverlay?.addEventListener('click', () => setNavOpen(false));
+      document.querySelectorAll('#sideNav a').forEach(a => {
+        a.addEventListener('click', () => setNavOpen(false));
+      });
+
+      // ===== FAQ animation =====
+      document.querySelectorAll('details.faq').forEach(detail => {
+        const summary = detail.querySelector('summary');
+        const body = detail.querySelector('.faq-body');
+        if (!summary || !body) return;
+
+        if (detail.open) {
+          body.style.maxHeight = body.scrollHeight + 'px';
+          requestAnimationFrame(() => { body.style.maxHeight = 'none'; });
+        }
+
+        summary.addEventListener('click', e => {
+          e.preventDefault();
+          if (detail.open) {
+            body.style.maxHeight = body.scrollHeight + 'px';
+            body.offsetHeight;
+            detail.classList.add('is-collapsing');
+            body.style.maxHeight = '0px';
+            const onEnd = () => {
+              detail.open = false;
+              detail.classList.remove('is-collapsing');
+              body.removeEventListener('transitionend', onEnd);
+            };
+            body.addEventListener('transitionend', onEnd);
+          } else {
+            detail.open = true;
+            body.style.maxHeight = '0px';
+            body.offsetHeight;
+            body.style.maxHeight = body.scrollHeight + 'px';
+            const onEnd = () => {
+              body.style.maxHeight = 'none';
+              body.removeEventListener('transitionend', onEnd);
+            };
+            body.addEventListener('transitionend', onEnd);
+          }
+        });
+      });
+
+      // ===== 複製按鈕 =====
+      document.querySelectorAll('.code-block').forEach(block => {
+        const btn = block.querySelector('.copy-btn');
+        if (!btn) return;
+        btn.addEventListener('click', async () => {
+          const code = block.querySelector('pre code');
+          if (!code) return;
+          try {
+            await navigator.clipboard.writeText(code.textContent);
+            const orig = btn.textContent;
+            btn.textContent = '已複製';
+            btn.classList.add('copied');
+            setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1400);
+          } catch (e) {
+            btn.textContent = '複製失敗';
+          }
+        });
+      });
+
+      // ===== Module tabs =====
+      const tabs = document.querySelectorAll('.module-nav button');
+      const panels = document.querySelectorAll('.module-panel');
+      const moduleNav = document.querySelector('.module-nav');
+      const topbarEl = document.querySelector('.topbar');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          const key = tab.dataset.tab;
+          tabs.forEach(t => t.classList.toggle('active', t === tab));
+          panels.forEach(p => p.classList.toggle('active', p.dataset.panel === key));
+          // 自動捲動：讓 tab nav 對齊頂部下方，新內容立即可見
+          if (moduleNav) {
+            const topbarH = topbarEl ? topbarEl.offsetHeight : 60;
+            const targetY = moduleNav.getBoundingClientRect().top + window.scrollY - topbarH - 12;
+            if (window.scrollY > targetY + 4 || moduleNav.getBoundingClientRect().top < topbarH) {
+              window.scrollTo({ top: targetY, behavior: 'smooth' });
+            }
+          }
+        });
+      });
+
+      // ===== Scrollspy =====
+      const navLinks = document.querySelectorAll('#sideNav a');
+      const sections = Array.from(navLinks)
+        .map(a => document.getElementById(a.getAttribute('href').slice(1)))
+        .filter(Boolean);
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const id = entry.target.id;
+            navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+          }
+        });
+      }, { rootMargin: '-40% 0px -55% 0px', threshold: 0 });
+      sections.forEach(s => observer.observe(s));
+
+      // ===== Progress bar =====
+      const bar = document.getElementById('progressBar');
+      const updateProgress = () => {
+        const h = document.documentElement;
+        const total = h.scrollHeight - h.clientHeight;
+        bar.style.width = total > 0 ? (h.scrollTop / total * 100) + '%' : '0%';
+      };
+      document.addEventListener('scroll', updateProgress, { passive: true });
+      updateProgress();
+
+      // ===== Preview Modal =====
+      const modal = document.getElementById('modal');
+      const modalIcon = document.getElementById('modalIcon');
+      const modalTitle = document.getElementById('modalTitle');
+      const modalPath = document.getElementById('modalPath');
+      const modalBody = document.getElementById('modalBody');
+      const modalCopy = document.getElementById('modalCopy');
+      const modalDownload = document.getElementById('modalDownload');
+      const modalClose = document.getElementById('modalClose');
+      let currentText = '';
+      let currentName = '';
+      let lastFocus = null;
+
+      const openModal = async (card) => {
+        const file = card.dataset.file;
+        const display = card.dataset.display || card.querySelector('.dl-meta b')?.textContent || file;
+        const icon = card.querySelector('.dl-icon')?.textContent || 'JSON';
+        modalIcon.textContent = icon;
+        modalTitle.dataset.rawText = display;
+        modalTitle.textContent = toLanguage(display);
+        modalPath.textContent = file;
+        modalDownload.href = file;
+        modalDownload.setAttribute('download', file.split('/').pop());
+        modalBody.innerHTML = '<div class="loading">' + toLanguage('載入中…') + '</div>';
+        currentText = '';
+        currentName = file.split('/').pop();
+        lastFocus = document.activeElement;
+        modal.hidden = false;
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+
+        try {
+          const res = await fetch(encodeURI(file));
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          const text = await res.text();
+          currentText = prettyPrintJSON(text);
+          modalBody.innerHTML = '<pre><code>' + highlightJSON(currentText) + '</code></pre>';
+        } catch (err) {
+          modalBody.innerHTML =
+            '<div class="err"><strong>無法載入檔案</strong>' +
+            '目前無法讀取此檔案內容。<br>' +
+            '可直接按右上 <strong>下載</strong> 取得檔案。' +
+            '<br><br>錯誤：<code>' + (err.message || err) + '</code></div>';
+        }
+        applyLanguage(modalBody);
+      };
+
+      const closeModal = () => {
+        modal.classList.remove('show');
+        modal.hidden = true;
+        document.body.style.overflow = '';
+        if (lastFocus && lastFocus.focus) lastFocus.focus();
+      };
+
+      const selectModalContent = () => {
+        const target = modalBody.querySelector('pre code') || modalBody;
+        const range = document.createRange();
+        range.selectNodeContents(target);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+      };
+
+      document.querySelectorAll('.dl-card').forEach(card => {
+        card.addEventListener('click', () => openModal(card));
+      });
+      modalClose.addEventListener('click', closeModal);
+      modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+      modalCopy.addEventListener('click', async () => {
+        if (!currentText) return;
+        try {
+          await navigator.clipboard.writeText(currentText);
+          const orig = modalCopy.textContent;
+          modalCopy.textContent = toLanguage('已複製');
+          setTimeout(() => modalCopy.textContent = orig, 1400);
+        } catch (e) {
+          modalCopy.textContent = toLanguage('複製失敗');
+        }
+      });
+
+      // ===== Download filter =====
+      const dlFilter = document.getElementById('dlFilter');
+      const dlCount = document.getElementById('dlCount');
+      const dlCards = Array.from(document.querySelectorAll('#downloadGrid .dl-card'));
+      if (dlFilter) {
+        dlFilter.addEventListener('input', e => {
+          const q = e.target.value.trim().toLowerCase();
+          let visible = 0;
+          dlCards.forEach(card => {
+            const haystack = (card.dataset.name + ' ' + card.textContent).toLowerCase();
+            const hit = !q || haystack.includes(q);
+            card.style.display = hit ? '' : 'none';
+            if (hit) visible++;
+          });
+          dlCount.textContent = toLanguage(q ? `符合 ${visible} / ${dlCards.length} 個檔案` : `${dlCards.length} 個檔案`);
+        });
+      }
+
+      // ===== Search filter =====
+      const input = document.getElementById('searchInput');
+      const meta = document.getElementById('searchMeta');
+      const metaText = document.getElementById('searchMetaText');
+      const clearBtn = document.getElementById('clearSearch');
+      const targets = document.querySelectorAll('section, .card, .band, details.faq, tr');
+      const sectionEls = document.querySelectorAll('main > section');
+
+      const applyFilter = (q) => {
+        q = q.trim().toLowerCase();
+        if (!q) {
+          targets.forEach(el => el.classList.remove('filter-hidden'));
+          sectionEls.forEach(s => s.classList.remove('filter-hidden'));
+          meta.classList.remove('show');
+          return;
+        }
+        let matched = 0;
+        // First, hide all cards/rows/faqs that don't match
+        targets.forEach(el => {
+          if (el.tagName === 'SECTION') return;
+          const text = el.textContent.toLowerCase();
+          const hit = text.includes(q);
+          el.classList.toggle('filter-hidden', !hit);
+          if (hit) matched++;
+        });
+        // Hide sections that have no visible cards/rows/faqs
+        sectionEls.forEach(sec => {
+          const hasMatch = sec.textContent.toLowerCase().includes(q);
+          sec.classList.toggle('filter-hidden', !hasMatch);
+        });
+        metaText.textContent = toLanguage(`找到 ${matched} 個符合「${q}」的項目`);
+        meta.classList.add('show');
+      };
+
+      input.addEventListener('input', e => applyFilter(e.target.value));
+      clearBtn.addEventListener('click', () => {
+        input.value = '';
+        applyFilter('');
+        input.focus();
+      });
+
+      // Keyboard shortcuts
+      document.addEventListener('keydown', e => {
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'a' && !modal.hidden) {
+          e.preventDefault();
+          selectModalContent();
+          return;
+        }
+        // Close modal first
+        if (e.key === 'Escape' && !modal.hidden) {
+          closeModal();
+          return;
+        }
+        if (e.key === 'Escape' && document.body.classList.contains('nav-open')) {
+          setNavOpen(false);
+          return;
+        }
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+          if (e.key === 'Escape') { input.value = ''; applyFilter(''); input.blur(); }
+          return;
+        }
+        if (e.key === '/') { e.preventDefault(); input.focus(); }
+        if (e.key === 't' || e.key === 'T') { themeBtn.click(); }
+        if (e.key === 'Escape') { input.value = ''; applyFilter(''); }
+      });
+
+      // ===== Fallback download when fetch fails (file://) =====
+      modalDownload.addEventListener('click', e => {
+        // If we have loaded JSON in modal, use Blob to ensure browser downloads
+        // even when href would otherwise just open the file in a new tab.
+        if (currentText) {
+          e.preventDefault();
+          const blob = new Blob([currentText], { type: 'application/json;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = currentName || 'book-source.json';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+        // otherwise fall through to native <a download>
+      });
+    })();
+  </script>
+</body>
+
+</html>

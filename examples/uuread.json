@@ -1,0 +1,295 @@
+{
+  "info": {
+    "type": 99,
+    "name": "UU看書",
+    "alias": "uuread",
+    "index": 1011,
+    "version": 1,
+    "enabled": true,
+    "sortIndex": 1011,
+    "allowSearch": true,
+    "allowDownload": true
+  },
+  "data": {
+    "searchIndex": 1011,
+    "request": {
+      "home": {
+        "main": {
+          "settings": {
+            "apiHost": "https://www.uuread.tw",
+            "apiPath": "/sort/all/1.html",
+            "needsCustomUserAgent": true,
+            "httpMethod": "GET"
+          },
+          "config": {
+            "charEncodingRawValue": 2
+          }
+        },
+        "inPage": true
+      },
+      "detail": {
+        "main": {
+          "settings": {
+            "apiHost": "https://www.uuread.tw",
+            "needsCustomUserAgent": true,
+            "httpMethod": "GET"
+          },
+          "config": {
+            "charEncodingRawValue": 2
+          }
+        },
+        "inPage": true
+      },
+      "content": {
+        "settings": {
+          "apiHost": "https://www.uuread.tw",
+          "needsCustomUserAgent": true,
+          "httpMethod": "GET"
+        },
+        "config": {
+          "charEncodingRawValue": 2
+        }
+      },
+      "category": {
+        "main": {
+          "settings": {
+            "apiHost": "https://www.uuread.tw",
+            "apiPathReplacements": {
+              "/1.html": ""
+            },
+            "apiPageIndexPrefix": "/",
+            "apiPathSuffix": ".html",
+            "needsCustomUserAgent": true,
+            "httpMethod": "GET"
+          },
+          "config": {
+            "charEncodingRawValue": 2
+          }
+        }
+      },
+      "search": {
+        "settings": {
+          "apiHost": "https://www.uuread.tw",
+          "apiPath": "/search",
+          "apiQueryKey": "searchkey",
+          "apiQueryParams": {
+            "searchtype": "all"
+          },
+          "apiQueryLangRawValue": 0,
+          "apiQueryTypeRawValue": 0,
+          "needsCustomUserAgent": true,
+          "httpMethod": "POST",
+          "httpHeaders": {
+            "Content-Type": "application/x-www-form-urlencoded"
+          }
+        },
+        "config": {
+          "charEncodingRawValue": 2
+        }
+      }
+    },
+    "response": {
+      "config": {
+        "charEncodingRawValue": 2
+      },
+      "hostsToReplace": [
+        "https://www.uuread.tw",
+        "http://www.uuread.tw",
+        "https://uuread.tw",
+        "http://uuread.tw"
+      ],
+      "imageHost": "https://www.uuread.tw",
+      "home": {
+        "template": 0,
+        "main": {
+          "pathRegex": "^\\/\\d+$",
+          "listElement": {
+            "cssSelector": "div.index-body-nr-left-1-li"
+          },
+          "pathElement": {
+            "actionValue": 10,
+            "cssSelector": "strong.text-more > a",
+            "attributeKey": "href"
+          },
+          "nameElement": {
+            "actionValue": 0,
+            "cssSelector": "strong.text-more > a"
+          },
+          "imageElement": {
+            "actionValue": 10,
+            "cssSelector": "img.lazy",
+            "attributeKey": "srcset"
+          },
+          "authorElement": {
+            "actionValue": 0,
+            "cssSelector": "span.index-body-nr-left-span > a"
+          }
+        },
+        "category": {
+          "pathRegex": "^\\/sort\\/[a-z0-9]+\\/1\\.html$",
+          "listElement": {
+            "cssSelector": "ul.type-fen-2 > li.type-fen-1-1"
+          },
+          "pathElement": {
+            "actionValue": 10,
+            "cssSelector": "a",
+            "attributeKey": "href"
+          },
+          "nameElement": {
+            "actionValue": 0,
+            "cssSelector": "a"
+          }
+        }
+      },
+      "detail": {
+        "removeElements": [
+          "script",
+          "style",
+          "link"
+        ],
+        "imageElement": {
+          "actionValue": 10,
+          "cssSelector": "meta[property='og:image']",
+          "attributeKey": "content"
+        },
+        "authorElement": {
+          "actionValue": 10,
+          "cssSelector": "meta[property='og:novel:author']",
+          "attributeKey": "content"
+        },
+        "summaryElement": {
+          "actionValue": 10,
+          "cssSelector": "meta[property='og:description']",
+          "attributeKey": "content"
+        },
+        "categoryElement": {
+          "actionValue": 10,
+          "cssSelector": "meta[property='og:novel:category']",
+          "attributeKey": "content"
+        },
+        "updatedTimeElement": {
+          "actionValue": 10,
+          "cssSelector": "meta[property='og:novel:update_time']",
+          "attributeKey": "content"
+        }
+      },
+      "chapter": {
+        "pathRegex": "^\\/chapter\\/\\d+\\/\\d+\\.html$",
+        "removeElements": [
+          "script",
+          "style"
+        ],
+        "listElement": {
+          "cssSelector": "ul#newlist > li"
+        },
+        "pathElement": {
+          "actionValue": 10,
+          "cssSelector": "a",
+          "attributeKey": "href"
+        },
+        "nameElement": {
+          "actionValue": 0,
+          "cssSelector": "a"
+        }
+      },
+      "content": {
+        "chapterPathRegex": "^\\/chapter\\/\\d+\\/\\d+(_\\d+)?\\.html$",
+        "removeElements": [
+          "script",
+          "style"
+        ],
+        "nameElement": {
+          "actionValue": 0,
+          "cssSelector": "h1.chatit",
+          "blankReplacements": {
+            "1": [
+              "（\\d+\\s*\\/\\s*\\d+）",
+              "\\(\\d+\\s*\\/\\s*\\d+\\)"
+            ]
+          }
+        },
+        "contentElement": {
+          "separator": "\n",
+          "actionValue": 22,
+          "cssSelector": "div.txt_tcontent",
+          "invalidTags": [
+            "<h",
+            "<div",
+            "</div",
+            "<span",
+            "</span",
+            "<script",
+            "</script",
+            "⊥"
+          ],
+          "replaceTags": [
+            "<p>",
+            "</p>",
+            "<br>",
+            "</br>",
+            "<br />"
+          ]
+        },
+        "lastChapterPathElement": {
+          "actionValue": 10,
+          "cssSelector": "div.operate a.btn-primary",
+          "attributeKey": "href"
+        },
+        "nextChapterPathElement": {
+          "actionValue": 6,
+          "cssSelector": "div.operate a.btn-primary",
+          "attributeKey": "href"
+        }
+      },
+      "category": {
+        "pageSize": 14,
+        "pathRegex": "^\\/\\d+$",
+        "listElement": {
+          "cssSelector": "div.index-body-nr-left1.xb9 ul.newlist > li"
+        },
+        "pathElement": {
+          "actionValue": 10,
+          "cssSelector": "div.newlist-title > a",
+          "attributeKey": "href"
+        },
+        "nameElement": {
+          "actionValue": 0,
+          "cssSelector": "div.newlist-title > a"
+        },
+        "authorElement": {
+          "actionValue": 0,
+          "cssSelector": "div.newlist-zz > a"
+        },
+        "categoryElement": {
+          "actionValue": 0,
+          "cssSelector": "div.newlist-type",
+          "blankReplacements": {
+            "0": [
+              "[",
+              "]"
+            ]
+          }
+        },
+        "chapterNameElement": {
+          "actionValue": 0,
+          "cssSelector": "div.newlist-zj > a"
+        }
+      },
+      "search": {
+        "pathRegex": "^\\/\\d+$",
+        "listElement": {
+          "cssSelector": "div.index-body-nr-left1.xb9 ul.newlist > li"
+        },
+        "mPathElement": {
+          "actionValue": 10,
+          "cssSelector": "div.newlist-title > a",
+          "attributeKey": "href"
+        },
+        "mNameElement": {
+          "actionValue": 0,
+          "cssSelector": "div.newlist-title > a"
+        }
+      }
+    }
+  }
+}

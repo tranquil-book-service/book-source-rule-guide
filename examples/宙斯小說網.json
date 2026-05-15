@@ -1,0 +1,332 @@
+{
+  "info": {
+    "type": 99,
+    "name": "宙斯小說網",
+    "alias": "宙斯",
+    "index": 1104,
+    "version": 1,
+    "enabled": true,
+    "sortIndex": 1104,
+    "allowSearch": true,
+    "allowDownload": true
+  },
+  "data": {
+    "searchIndex": 1104,
+    "request": {
+      "home": {
+        "main": {
+          "settings": {
+            "apiHost": "https://tw.zhswx.com",
+            "apiPath": "/",
+            "needsCustomUserAgent": true,
+            "httpMethod": "GET"
+          },
+          "config": {
+            "charEncodingRawValue": 2
+          }
+        },
+        "inPage": true
+      },
+      "detail": {
+        "main": {
+          "settings": {
+            "apiHost": "https://tw.zhswx.com",
+            "needsCustomUserAgent": true,
+            "httpMethod": "GET"
+          },
+          "config": {
+            "charEncodingRawValue": 2
+          }
+        },
+        "inPage": false
+      },
+      "chapter": {
+        "main": {
+          "settings": {
+            "apiHost": "https://tw.zhswx.com",
+            "needsCustomUserAgent": true,
+            "httpMethod": "GET"
+          },
+          "config": {
+            "charEncodingRawValue": 2
+          }
+        },
+        "isPartial": false
+      },
+      "content": {
+        "settings": {
+          "apiHost": "https://tw.zhswx.com",
+          "needsCustomUserAgent": true,
+          "httpMethod": "GET"
+        },
+        "config": {
+          "charEncodingRawValue": 2
+        }
+      },
+      "category": {
+        "main": {
+          "settings": {
+            "apiHost": "https://tw.zhswx.com",
+            "apiPathReplacements": {
+              "/list/": "/zhslist/",
+              ".html": ""
+            },
+            "apiPageIndexPrefix": "_",
+            "apiPathSuffix": ".html",
+            "finalURLReplacements": {
+              "_1.html": ".html"
+            },
+            "needsCustomUserAgent": true,
+            "httpMethod": "GET"
+          },
+          "config": {
+            "charEncodingRawValue": 2
+          }
+        }
+      },
+      "search": {
+        "settings": {
+          "apiHost": "https://tw.zhswx.com",
+          "apiPath": "/list/",
+          "extraApiPathSuffix": ".html",
+          "apiQueryTypeRawValue": 2,
+          "apiQueryLangRawValue": 0,
+          "needsCustomUserAgent": true,
+          "httpMethod": "GET"
+        },
+        "config": {
+          "charEncodingRawValue": 2
+        }
+      }
+    },
+    "response": {
+      "config": {
+        "charEncodingRawValue": 2
+      },
+      "hostsToReplace": [
+        "https://tw.zhswx.com",
+        "http://tw.zhswx.com",
+        "https://www.zhswx.com",
+        "http://www.zhswx.com",
+        "//tw.zhswx.com",
+        "//www.zhswx.com"
+      ],
+      "imageHost": "https://tw.zhswx.com",
+      "home": {
+        "template": 0,
+        "main": {
+          "pathRegex": "^\\/book\\/\\d+\\.html$",
+          "listElement": {
+            "cssSelector": "div#novel_type div.item"
+          },
+          "pathElement": {
+            "actionValue": 10,
+            "cssSelector": "span.img a",
+            "attributeKey": "href"
+          },
+          "nameElement": {
+            "actionValue": 0,
+            "cssSelector": "h3 a",
+            "blankReplacements": {
+              "1": [
+                "\\s*\\/\\s*.*$"
+              ]
+            }
+          },
+          "imageElement": {
+            "actionValue": 10,
+            "cssSelector": "span.img img",
+            "attributeKey": "src"
+          },
+          "authorElement": {
+            "actionValue": 0,
+            "cssSelector": "h3 a",
+            "blankReplacements": {
+              "1": [
+                "^.*\\/\\s*"
+              ]
+            }
+          },
+          "categoryElement": {
+            "actionValue": 0,
+            "cssSelector": "h5"
+          }
+        },
+        "category": {
+          "pathRegex": "^\\/list\\/[^\\/]+\\.html$",
+          "listElement": {
+            "cssSelector": "div#menubar li a[href^='/list/']"
+          },
+          "pathElement": {
+            "actionValue": 10,
+            "cssSelector": "a",
+            "attributeKey": "href"
+          },
+          "nameElement": {
+            "actionValue": 0,
+            "cssSelector": "a"
+          }
+        }
+      },
+      "detail": {
+        "removeElements": [
+          "script",
+          "style"
+        ],
+        "nameElement": {
+          "actionValue": 0,
+          "cssSelector": "div#novel_title h1"
+        },
+        "imageElement": {
+          "actionValue": 10,
+          "cssSelector": "td[width='170px'] img",
+          "attributeKey": "src"
+        },
+        "authorElement": {
+          "actionValue": 0,
+          "cssSelector": "td.style2 div[style*='line-height'] a[href^='/list/']",
+          "selectIndex": 0
+        },
+        "summaryElement": {
+          "actionValue": 0,
+          "cssSelector": "td.style2 div[style*='line-height']",
+          "blankReplacements": {
+            "1": [
+              "^[\\s\\S]*?【內容簡介】",
+              "閱讀目錄[\\s\\S]*$",
+              "^\\s+",
+              "\\s+$"
+            ]
+          }
+        },
+        "categoryElement": {
+          "actionValue": 2,
+          "cssSelector": "td.style2 div[style*='line-height'] a[href^='/list/']",
+          "collectionSeparator": ", ",
+          "collectionActionValue": 0,
+          "collectionValueIndexes": [
+            1,
+            2,
+            3
+          ]
+        },
+        "chapterNameElement": {
+          "actionValue": 0,
+          "cssSelector": "td.chapterlist a",
+          "selectIndex": 0
+        },
+        "chapterPathElement": {
+          "actionValue": 10,
+          "cssSelector": "div#novel_toolbar a[href^='/chapter/']",
+          "attributeKey": "href"
+        },
+        "chapterPathRegex": "^\\/chapter\\/\\d+\\.html$"
+      },
+      "chapter": {
+        "pathRegex": "^\\/read\\/\\d+_\\d+\\.html$",
+        "listElement": {
+          "cssSelector": "td.chapterlist"
+        },
+        "pathElement": {
+          "actionValue": 10,
+          "cssSelector": "a",
+          "attributeKey": "href"
+        },
+        "nameElement": {
+          "actionValue": 0,
+          "cssSelector": "a"
+        }
+      },
+      "content": {
+        "chapterPathRegex": "^\\/read\\/\\d+_\\d+\\.html$",
+        "removeElements": [
+          "script",
+          "style"
+        ],
+        "nameElement": {
+          "actionValue": 0,
+          "cssSelector": "h1[style*='text-align']"
+        },
+        "contentElement": {
+          "separator": "\n",
+          "actionValue": 19,
+          "cssSelector": "div[style*='font-size: 20px'][style*='text-indent: 2em']",
+          "blankReplacements": {
+            "1": [
+              "&nbsp;"
+            ]
+          }
+        },
+        "lastChapterPathElement": {
+          "actionValue": 10,
+          "cssSelector": "form > div[align='center'] > a:nth-of-type(1)",
+          "attributeKey": "href"
+        },
+        "nextChapterPathElement": {
+          "actionValue": 10,
+          "cssSelector": "form > div[align='center'] > a:nth-of-type(3)",
+          "attributeKey": "href"
+        }
+      },
+      "category": {
+        "pageSize": 50,
+        "pathRegex": "^\\/book\\/\\d+\\.html$",
+        "listElement": {
+          "cssSelector": "div#newest table.updating tr[class]"
+        },
+        "pathElement": {
+          "actionValue": 10,
+          "cssSelector": "td.td2 a",
+          "attributeKey": "href"
+        },
+        "nameElement": {
+          "actionValue": 0,
+          "cssSelector": "td.td2 a"
+        },
+        "authorElement": {
+          "actionValue": 0,
+          "cssSelector": "td.td4"
+        },
+        "categoryElement": {
+          "actionValue": 0,
+          "cssSelector": "td.td1 a"
+        },
+        "chapterNameElement": {
+          "actionValue": 0,
+          "cssSelector": "td.td3 a"
+        },
+        "updatedTimeElement": {
+          "actionValue": 0,
+          "cssSelector": "td.td5"
+        }
+      },
+      "search": {
+        "pathRegex": "^\\/book\\/\\d+\\.html$",
+        "listElement": {
+          "cssSelector": "div#newest table.updating tr[class]"
+        },
+        "mPathElement": {
+          "actionValue": 10,
+          "cssSelector": "td.td2 a",
+          "attributeKey": "href"
+        },
+        "mNameElement": {
+          "actionValue": 0,
+          "cssSelector": "td.td2 a"
+        },
+        "mAuthorElement": {
+          "actionValue": 0,
+          "cssSelector": "td.td4"
+        },
+        "mCategoryElement": {
+          "actionValue": 0,
+          "cssSelector": "td.td1 a"
+        },
+        "mChapterNameElement": {
+          "actionValue": 0,
+          "cssSelector": "td.td3 a"
+        }
+      }
+    }
+  }
+}

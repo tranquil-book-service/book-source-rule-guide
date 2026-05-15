@@ -1,0 +1,374 @@
+{
+  "info": {
+    "type": 99,
+    "name": "飘天文学",
+    "alias": "飘天文学",
+    "index": 1010,
+    "version": 1,
+    "enabled": true,
+    "sortIndex": 1010,
+    "allowSearch": true,
+    "allowDownload": true
+  },
+  "data": {
+    "searchIndex": 1010,
+    "request": {
+      "home": {
+        "main": {
+          "settings": {
+            "apiHost": "https://www.piaotia.com",
+            "apiPath": "/",
+            "needsCustomUserAgent": true,
+            "httpMethod": "GET"
+          },
+          "config": {
+            "charEncodingRawValue": 0
+          }
+        },
+        "category": {
+          "settings": {
+            "apiHost": "https://www.piaotia.com",
+            "apiPath": "/",
+            "needsCustomUserAgent": true,
+            "httpMethod": "GET"
+          },
+          "config": {
+            "charEncodingRawValue": 0
+          }
+        },
+        "inPage": false
+      },
+      "detail": {
+        "main": {
+          "settings": {
+            "apiHost": "https://www.piaotia.com",
+            "needsCustomUserAgent": true,
+            "httpMethod": "GET"
+          },
+          "config": {
+            "charEncodingRawValue": 0
+          }
+        },
+        "inPage": false
+      },
+      "chapter": {
+        "main": {
+          "settings": {
+            "apiHost": "https://www.piaotia.com",
+            "needsCustomUserAgent": true,
+            "httpMethod": "GET"
+          },
+          "config": {
+            "charEncodingRawValue": 0
+          }
+        },
+        "isPartial": false
+      },
+      "content": {
+        "settings": {
+          "apiHost": "https://www.piaotia.com",
+          "needsCustomUserAgent": true,
+          "httpMethod": "GET"
+        },
+        "config": {
+          "charEncodingRawValue": 0
+        }
+      },
+      "category": {
+        "main": {
+          "settings": {
+            "apiHost": "https://www.piaotia.com",
+            "apiPathReplacements": {
+              "1.html": ""
+            },
+            "apiPathSuffix": ".html",
+            "needsCustomUserAgent": true,
+            "httpMethod": "GET"
+          },
+          "config": {
+            "charEncodingRawValue": 0
+          }
+        }
+      },
+      "search": {
+        "settings": {
+          "apiHost": "https://www.piaotia.com",
+          "apiPath": "/modules/article/search.php",
+          "apiQueryKey": "searchkey",
+          "apiQueryParams": {
+            "searchtype": "articlename",
+            "Submit": ""
+          },
+          "apiQueryLangRawValue": 1,
+          "needsCustomUserAgent": true,
+          "httpMethod": "POST",
+          "httpHeaders": {
+            "Content-Type": "application/x-www-form-urlencoded"
+          }
+        },
+        "config": {
+          "charEncodingRawValue": 0
+        }
+      }
+    },
+    "response": {
+      "config": {
+        "charEncodingRawValue": 0
+      },
+      "hostsToReplace": [
+        "https://www.piaotia.com",
+        "http://www.piaotia.com"
+      ],
+      "imageHost": "https://www.piaotia.com",
+      "home": {
+        "template": 0,
+        "main": {
+          "pathRegex": "^\\/bookinfo\\/\\d+\\/\\d+\\.html$",
+          "listElement": {
+            "cssSelector": "div#fengtui"
+          },
+          "pathElement": {
+            "actionValue": 10,
+            "cssSelector": "div#fengtuiword > a:nth-of-type(1)",
+            "attributeKey": "href"
+          },
+          "nameElement": {
+            "actionValue": 0,
+            "cssSelector": "div#fengtuiword > a:nth-of-type(1)"
+          },
+          "imageElement": {
+            "actionValue": 10,
+            "cssSelector": "div#fengtuipic img",
+            "attributeKey": "src"
+          },
+          "authorElement": {
+            "actionValue": 0,
+            "cssSelector": "div#fengtuiword font",
+            "blankReplacements": {
+              "0": [
+                "作者："
+              ]
+            }
+          },
+          "summaryElement": {
+            "actionValue": 0,
+            "cssSelector": "div#fengtuiword > a:nth-of-type(2)",
+            "blankReplacements": {
+              "1": [
+                "^\\s+",
+                "\\s+$"
+              ]
+            }
+          }
+        },
+        "category": {
+          "pathRegex": "^\\/booksort\\d?\\/\\d+\\/\\d+\\.html$",
+          "listElement": {
+            "cssSelector": "ul.navlist > li"
+          },
+          "pathElement": {
+            "actionValue": 10,
+            "cssSelector": "a",
+            "attributeKey": "href"
+          },
+          "nameElement": {
+            "actionValue": 0,
+            "cssSelector": "a"
+          }
+        }
+      },
+      "detail": {
+        "removeElements": [
+          "script",
+          "style"
+        ],
+        "imageElement": {
+          "actionValue": 10,
+          "cssSelector": "img[src*='/files/article/image/']",
+          "attributeKey": "src"
+        },
+        "categoryElement": {
+          "actionValue": 0,
+          "cssSelector": "td[width='25%']",
+          "selectIndex": 0,
+          "blankReplacements": {
+            "1": [
+              "类\\s*别：",
+              "\\s+"
+            ]
+          }
+        },
+        "authorElement": {
+          "actionValue": 0,
+          "cssSelector": "td[width='25%']",
+          "selectIndex": 1,
+          "blankReplacements": {
+            "1": [
+              "作\\s*者：",
+              "\\s+"
+            ]
+          }
+        },
+        "updatedTimeElement": {
+          "actionValue": 0,
+          "cssSelector": "h1 ~ table tr:nth-of-type(3) > td:nth-of-type(1)",
+          "blankReplacements": {
+            "1": [
+              "最后更新：",
+              "\\s+"
+            ]
+          }
+        },
+        "summaryElement": {
+          "actionValue": 0,
+          "cssSelector": "div[style*='float:left']",
+          "blankReplacements": {
+            "1": [
+              "[\\s\\S]*?内容简介：\\s*",
+              "\\s+$"
+            ]
+          }
+        },
+        "chapterPathElement": {
+          "actionValue": 10,
+          "cssSelector": "a[title^='点击阅读']",
+          "attributeKey": "href"
+        },
+        "chapterPathRegex": "^\\/html\\/\\d+\\/\\d+\\/?$"
+      },
+      "chapter": {
+        "pathRegex": "^\\d+\\.html$",
+        "shouldReplaceBookPath": true,
+        "bookPathReplacements": {
+          "/html/": [
+            "/bookinfo/"
+          ],
+          "/": [
+            ".html"
+          ]
+        },
+        "removeElements": [
+          "script",
+          "style"
+        ],
+        "listElement": {
+          "cssSelector": "div.centent ul li"
+        },
+        "pathElement": {
+          "actionValue": 10,
+          "cssSelector": "a",
+          "attributeKey": "href"
+        },
+        "nameElement": {
+          "actionValue": 0,
+          "cssSelector": "a"
+        }
+      },
+      "content": {
+        "chapterPathRegex": "^\\d+\\.html$",
+        "shouldReplaceBookPath": true,
+        "bookPathReplacements": {
+          "/html/": [
+            "/bookinfo/"
+          ],
+          "/": [
+            ".html"
+          ]
+        },
+        "removeElements": [
+          "script",
+          "style",
+          "h1",
+          "table",
+          "div.toplink",
+          "div.bottomlink",
+          "div#guild",
+          "div#shop",
+          "div#Commenddiv",
+          "div#feit2",
+          "center"
+        ],
+        "nameElement": {
+          "actionValue": 5,
+          "cssSelector": "h1"
+        },
+        "contentElement": {
+          "separator": "\n",
+          "actionValue": 22,
+          "cssSelector": "body",
+          "invalidTags": [
+            "<h",
+            "<div",
+            "</div",
+            "<span",
+            "</span",
+            "<script",
+            "</script",
+            "⊥",
+            "<!--"
+          ],
+          "replaceTags": [
+            "<p>",
+            "</p>",
+            "<br>",
+            "</br>",
+            "<br />"
+          ]
+        },
+        "lastChapterPathElement": {
+          "actionValue": 10,
+          "cssSelector": "div.toplink > a:nth-of-type(1)",
+          "attributeKey": "href"
+        },
+        "nextChapterPathElement": {
+          "actionValue": 10,
+          "cssSelector": "div.toplink > a:nth-of-type(3)",
+          "attributeKey": "href"
+        }
+      },
+      "category": {
+        "pageSize": 30,
+        "pathRegex": "^\\/bookinfo\\/\\d+\\/\\d+\\.html$",
+        "listElement": {
+          "cssSelector": "table.grid tr:nth-of-type(n+2)"
+        },
+        "pathElement": {
+          "actionValue": 10,
+          "cssSelector": "td.odd:nth-of-type(1) > a",
+          "attributeKey": "href"
+        },
+        "nameElement": {
+          "actionValue": 0,
+          "cssSelector": "td.odd:nth-of-type(1) > a"
+        },
+        "authorElement": {
+          "actionValue": 0,
+          "cssSelector": "td.odd:nth-of-type(3)"
+        },
+        "chapterNameElement": {
+          "actionValue": 0,
+          "cssSelector": "td.even:nth-of-type(2) > a"
+        },
+        "updatedTimeElement": {
+          "actionValue": 0,
+          "cssSelector": "td.odd:nth-of-type(5)"
+        }
+      },
+      "search": {
+        "pathRegex": "^\\/bookinfo\\/\\d+\\/\\d+\\.html$",
+        "listElement": {
+          "cssSelector": "table.grid tr:nth-of-type(n+2)"
+        },
+        "mPathElement": {
+          "actionValue": 10,
+          "cssSelector": "td.odd:nth-of-type(1) > a",
+          "attributeKey": "href"
+        },
+        "mNameElement": {
+          "actionValue": 0,
+          "cssSelector": "td.odd:nth-of-type(1) > a"
+        }
+      }
+    }
+  }
+}
